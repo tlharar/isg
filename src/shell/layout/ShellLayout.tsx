@@ -33,7 +33,7 @@ export function ShellLayout() {
         padding="md"
         aria-label="Navigation menu"
       >
-        <NavContent onNavigate={closeDrawer} />
+        <NavContent onNavigate={closeDrawer} showLanguageAtBottom />
       </Drawer>
     </>
   );

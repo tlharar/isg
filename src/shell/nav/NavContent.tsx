@@ -1,4 +1,4 @@
-import { NavLink, Stack, Text } from '@mantine/core';
+import { NavLink, Stack, Text, SegmentedControl, Box } from '@mantine/core';
 import { useLocation, Link } from 'react-router-dom';
 import {
   IconLayoutDashboard,
@@ -7,6 +7,7 @@ import {
   IconSchool,
 } from '@tabler/icons-react';
 import { useTranslation } from '@shared/i18n';
+import { useAppStore } from '@shared/stores/appStore';
 
 const navItems = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: IconLayoutDashboard },
@@ -17,31 +18,54 @@ const navItems = [
 
 interface NavContentProps {
   onNavigate?: () => void;
+  /** When true (mobile drawer), show language switcher at bottom of modules section */
+  showLanguageAtBottom?: boolean;
 }
 
-export function NavContent({ onNavigate }: NavContentProps) {
+export function NavContent({ onNavigate, showLanguageAtBottom }: NavContentProps) {
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const setLocale = useAppStore((s) => s.setLocale);
 
   return (
-    <>
-      <Text fw={600} size="sm" c="dimmed" px="xs" mb="xs">
-        {t('nav.modules')}
-      </Text>
-      <Stack gap={2}>
-        {navItems.map(({ to, labelKey, icon: Icon }) => (
-          <NavLink
-            key={to}
-            component={Link}
-            to={to}
-            label={t(labelKey)}
-            leftSection={<Icon size={20} stroke={1.5} />}
-            active={location.pathname === to}
-            variant="light"
-            onClick={onNavigate}
+    <Stack gap="md" style={{ height: showLanguageAtBottom ? '100%' : undefined }}>
+      <Box style={{ flex: showLanguageAtBottom ? 1 : undefined }}>
+        <Text fw={600} size="sm" c="dimmed" px="xs" mb="xs">
+          {t('nav.modules')}
+        </Text>
+        <Stack gap={2}>
+          {navItems.map(({ to, labelKey, icon: Icon }) => (
+            <NavLink
+              key={to}
+              component={Link}
+              to={to}
+              label={t(labelKey)}
+              leftSection={<Icon size={20} stroke={1.5} />}
+              active={location.pathname === to}
+              variant="light"
+              onClick={onNavigate}
+            />
+          ))}
+        </Stack>
+      </Box>
+      {showLanguageAtBottom && (
+        <Box pt="md" style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}>
+          <Text fw={500} size="xs" c="dimmed" mb="xs">
+            {t('common.language')}
+          </Text>
+          <SegmentedControl
+            size="sm"
+            value={locale}
+            onChange={(v) => setLocale(v === 'en' ? 'en' : 'tr')}
+            data={[
+              { label: t('common.en'), value: 'en' },
+              { label: t('common.tr'), value: 'tr' },
+            ]}
+            aria-label={t('common.language')}
+            fullWidth
           />
-        ))}
-      </Stack>
-    </>
+        </Box>
+      )}
+    </Stack>
   );
 }

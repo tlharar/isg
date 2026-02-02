@@ -2,7 +2,7 @@ export type Locale = 'en' | 'tr';
 
 export const translations = {
   en: {
-    appTitle: 'OHS Management System',
+    appTitle: 'Özgenin Şirketi',
     nav: {
       modules: 'OHS Modules',
       dashboard: 'Dashboard',
@@ -63,7 +63,7 @@ export const translations = {
       logout: 'Log out',
     },
     login: {
-      title: 'OHS Management System',
+      title: 'Özgenin Şirketi',
       username: 'Username',
       password: 'Password',
       login: 'Login',
@@ -76,7 +76,7 @@ export const translations = {
     },
   },
   tr: {
-    appTitle: 'İSG Yönetim Sistemi',
+    appTitle: 'Özgenin Şirketi',
     nav: {
       modules: 'İSG Modülleri',
       dashboard: 'Kontrol Paneli',
@@ -137,7 +137,7 @@ export const translations = {
       logout: 'Çıkış',
     },
     login: {
-      title: 'İSG Yönetim Sistemi',
+      title: 'Özgenin Şirketi',
       username: 'Kullanıcı adı',
       password: 'Şifre',
       login: 'Giriş',
