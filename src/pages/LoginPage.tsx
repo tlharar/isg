@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Title, Text, TextInput, PasswordInput, Button, Stack, Paper, Group, Image } from '@mantine/core';
+import { Box, Text, TextInput, PasswordInput, Button, Stack, Paper, Group } from '@mantine/core';
 import { useTranslation } from '@shared/i18n';
 import { useAuthStore } from '@shared/stores/authStore';
+
+/** Brand colors for ÖZARTEK dual-tone text (matches ShellHeader) */
+const BRAND_TURQUOISE = '#00C2CB';
+const BRAND_TEAL = '#006064';
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -38,10 +42,30 @@ export function LoginPage() {
     >
       <Paper shadow="md" p="xl" radius="md" w="100%" maw={400}>
         <Stack align="center" gap="md" mb="xl">
-          <Image src="/logo.svg" alt="" w={56} h={56} fit="contain" />
-          <Title order={2} ta="center">
-            {t('login.title')}
-          </Title>
+          <img
+            src="/logo.png"
+            alt="Özartek Logo"
+            height={60}
+            style={{ display: 'block', width: 'auto' }}
+          />
+          <Text
+            component="span"
+            fw={700}
+            style={{
+              fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+              fontSize: 'var(--mantine-h2-font-size)',
+              lineHeight: 1.2,
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+            }}
+          >
+            <Text component="span" inherit style={{ color: BRAND_TURQUOISE }}>
+              ÖZAR
+            </Text>
+            <Text component="span" inherit style={{ color: BRAND_TEAL }}>
+              TEK
+            </Text>
+          </Text>
         </Stack>
         <form onSubmit={handleLogin}>
           <Stack gap="md">

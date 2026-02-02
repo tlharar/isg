@@ -1,9 +1,14 @@
-import { AppShell, Group, Title, useMantineColorScheme, ActionIcon, Burger, SegmentedControl, Box, Image, Button, Select } from '@mantine/core';
+import { Link } from 'react-router-dom';
+import { AppShell, Group, useMantineColorScheme, ActionIcon, Burger, SegmentedControl, Box, Button, Select, Text } from '@mantine/core';
 import { IconSun, IconMoon, IconLogout, IconBuilding } from '@tabler/icons-react';
 import { useAppStore } from '@shared/stores/appStore';
 import { useAuthStore } from '@shared/stores/authStore';
 import { useTranslation } from '@shared/i18n';
 import { useCompanyStore } from '@store/companyStore';
+
+/** Brand colors for ÖZARTEK dual-tone text */
+const BRAND_TURQUOISE = '#00C2CB';
+const BRAND_TEAL = '#006064';
 
 interface ShellHeaderProps {
   mobileMenuOpened: boolean;
@@ -34,10 +39,46 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
             size="sm"
             aria-label={t('common.menu')}
           />
-          <Image src="/logo.svg" alt="" w={32} h={32} fit="contain" />
-          <Title order={4} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {t('appTitle')}
-          </Title>
+          <Link
+            to="/"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}
+            aria-label={t('appTitle')}
+          >
+            <Group wrap="nowrap" gap={6} style={{ minWidth: 0 }}>
+              <img
+                src="/logo.png"
+                alt="Özartek Logo"
+                height={50}
+                style={{ display: 'block', flexShrink: 0, width: 'auto' }}
+              />
+              <Text
+                component="span"
+                fw={700}
+                style={{
+                  fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                  fontSize: 'var(--mantine-h4-font-size)',
+                  lineHeight: 1.2,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                <Text component="span" inherit style={{ color: BRAND_TURQUOISE }}>
+                  ÖZAR
+                </Text>
+                <Text component="span" inherit style={{ color: BRAND_TEAL }}>
+                  TEK
+                </Text>
+              </Text>
+            </Group>
+          </Link>
         </Group>
         <Group gap="xs" wrap="nowrap">
           {/* Desktop-only: Company Select; mobile uses same control in sidebar */}
@@ -77,9 +118,9 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
           </Button>
           {user && (
             <Box visibleFrom="xs" style={{ maxWidth: 120 }}>
-              <Title order={6} c="dimmed" size="sm" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Text size="sm" c="dimmed" fw={500} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {user.displayName}
-              </Title>
+              </Text>
             </Box>
           )}
         </Group>

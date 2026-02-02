@@ -2,7 +2,7 @@ export type Locale = 'en' | 'tr';
 
 export const translations = {
   en: {
-    appTitle: 'Özgenin Şirketi',
+    appTitle: 'ÖZARTEK',
     nav: {
       modules: 'OHS Modules',
       dashboard: 'Dashboard',
@@ -190,7 +190,7 @@ export const translations = {
       },
     },
     login: {
-      title: 'Özgenin Şirketi',
+      title: 'ÖZARTEK',
       username: 'Username',
       password: 'Password',
       login: 'Login',
@@ -203,7 +203,7 @@ export const translations = {
     },
   },
   tr: {
-    appTitle: 'Özgenin Şirketi',
+    appTitle: 'ÖZARTEK',
     nav: {
       modules: 'İSG Modülleri',
       dashboard: 'Kontrol Paneli',
@@ -391,7 +391,7 @@ export const translations = {
       },
     },
     login: {
-      title: 'Özgenin Şirketi',
+      title: 'ÖZARTEK',
       username: 'Kullanıcı adı',
       password: 'Şifre',
       login: 'Giriş',

@@ -1,16 +1,17 @@
 import { MantineColorsTuple, createTheme } from '@mantine/core';
 
+/** Vibrant Turquoise/Cyan brand color - #00C2CB as main (index 6) */
 const turquoise: MantineColorsTuple = [
-  '#e6fcfc',
-  '#c3faf8',
-  '#96f2f0',
-  '#63e6e2',
-  '#38d9d4',
-  '#20c9c3',
-  '#14b8ae',
-  '#0d9488',
-  '#0f766e',
-  '#115e59',
+  '#e6fffe',
+  '#b3f7f6',
+  '#80efee',
+  '#4de7e6',
+  '#26dfde',
+  '#00d4d4',
+  '#00C2CB',
+  '#00a0a8',
+  '#007e85',
+  '#005c62',
 ];
 
 export const theme = createTheme({
@@ -21,7 +22,7 @@ export const theme = createTheme({
   fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
   headings: {
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   defaultRadius: 'md',
   components: {
