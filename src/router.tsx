@@ -13,6 +13,8 @@ import { TrainingNewPage } from '@domains/training/pages/TrainingNewPage';
 import { WorkerListPage } from '@domains/worker/pages/WorkerListPage';
 import { WorkerNewPage } from '@domains/worker/pages/WorkerNewPage';
 import { WorkerEditPage } from '@domains/worker/pages/WorkerEditPage';
+import { CustomerListPage } from '@domains/customer/pages/CustomerListPage';
+import { CompanyListPage } from '@domains/company/pages/CompanyListPage';
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +37,8 @@ export const router = createBrowserRouter([
           { path: 'worker', element: <WorkerListPage /> },
           { path: 'worker/new', element: <WorkerNewPage /> },
           { path: 'worker/:id/edit', element: <WorkerEditPage /> },
+          { path: 'customer', element: <CustomerListPage /> },
+          { path: 'company', element: <CompanyListPage /> },
         ],
       },
     ],

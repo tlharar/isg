@@ -24,6 +24,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { workerFormSchema, type WorkerFormValues } from '../schemas/workerSchema';
 import { useWorkerStore, type Worker } from '@store/workerStore';
+import { useAppStore } from '@shared/stores/appStore';
+import { useCompanyStore } from '@store/companyStore';
 
 const SAMPLE_WORKER_COLUMNS = [
   'nameSurname',
@@ -61,12 +63,14 @@ function workerToExportRow(w: Worker): WorkerExportRow {
 
 interface WorkerModalFormProps {
   worker: Worker | null;
+  selectedCompanyId: string | null;
   onSubmit: (data: WorkerFormValues) => void;
   onCancel: () => void;
   t: (key: string) => string;
 }
 
-function WorkerModalForm({ worker, onSubmit, onCancel, t }: WorkerModalFormProps) {
+function WorkerModalForm({ worker, selectedCompanyId, onSubmit, onCancel, t }: WorkerModalFormProps) {
+  const companies = useCompanyStore((s) => s.companies);
   const {
     register,
     handleSubmit,
@@ -84,6 +88,7 @@ function WorkerModalForm({ worker, onSubmit, onCancel, t }: WorkerModalFormProps
           workNo: worker.workNo ?? '',
           jobTitle: worker.jobTitle ?? '',
           gender: worker.gender,
+          companyId: worker.companyId ?? undefined,
         }
       : {
           nameSurname: '',
@@ -93,6 +98,7 @@ function WorkerModalForm({ worker, onSubmit, onCancel, t }: WorkerModalFormProps
           workNo: '',
           jobTitle: '',
           gender: undefined,
+          companyId: selectedCompanyId ?? undefined,
         },
   });
 
@@ -100,6 +106,9 @@ function WorkerModalForm({ worker, onSubmit, onCancel, t }: WorkerModalFormProps
   const employmentEndDate = watch('employmentEndDate');
   const dateOfBirth = watch('dateOfBirth');
   const visaDate = watch('visaDate');
+  const showCompanySelect = !selectedCompanyId;
+
+  const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -182,6 +191,16 @@ function WorkerModalForm({ worker, onSubmit, onCancel, t }: WorkerModalFormProps
           onChange={(d) => setValue('visaDate', d ?? undefined)}
           clearable
         />
+        {showCompanySelect && (
+          <Select
+            label={t('worker.form.company')}
+            placeholder={t('worker.form.company')}
+            data={companyOptions}
+            value={watch('companyId') ?? null}
+            onChange={(v) => setValue('companyId', v ?? undefined)}
+            clearable
+          />
+        )}
         <Group justify="flex-end" mt="md">
           <Button variant="default" type="button" onClick={onCancel}>
             {t('worker.back')}
@@ -195,12 +214,16 @@ function WorkerModalForm({ worker, onSubmit, onCancel, t }: WorkerModalFormProps
 
 export function WorkerListPage() {
   const { t } = useTranslation();
+  const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
   const { exportTableToExcel } = useExportExcel();
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
   const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
 
-  const workers = useWorkerStore((state) => state.workers);
+  const allWorkers = useWorkerStore((state) => state.workers);
+  const workers = selectedCompanyId
+    ? allWorkers.filter((w) => w.companyId === selectedCompanyId)
+    : allWorkers;
   const addWorker = useWorkerStore((state) => state.addWorker);
   const updateWorker = useWorkerStore((state) => state.updateWorker);
   const deleteWorker = useWorkerStore((state) => state.deleteWorker);
@@ -230,10 +253,14 @@ export function WorkerListPage() {
   };
 
   const handleModalSubmit = (data: WorkerFormValues) => {
+    const payload = {
+      ...data,
+      companyId: data.companyId ?? (editingWorker ? editingWorker.companyId : selectedCompanyId ?? undefined),
+    };
     if (editingWorker) {
-      updateWorker(editingWorker.id, data);
+      updateWorker(editingWorker.id, payload);
     } else {
-      addWorker(data);
+      addWorker(payload);
     }
     closeModal();
     setEditingWorker(null);
@@ -341,6 +368,7 @@ export function WorkerListPage() {
         <WorkerModalForm
           key={editingWorker?.id ?? 'new'}
           worker={editingWorker}
+          selectedCompanyId={selectedCompanyId}
           onSubmit={handleModalSubmit}
           onCancel={handleModalClose}
           t={t}

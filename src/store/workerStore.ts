@@ -7,8 +7,8 @@ export interface Worker extends WorkerFormValues {
 }
 
 const INITIAL_WORKERS: Worker[] = [
-  { id: '1', nameSurname: 'Ahmet Yılmaz', idNumber: '12345678901', email: 'ahmet@example.com', jobTitle: 'Technician' },
-  { id: '2', nameSurname: 'Ayşe Demir', idNumber: '98765432109', email: 'ayse@example.com', jobTitle: 'Engineer' },
+  { id: '1', nameSurname: 'Ahmet Yılmaz', idNumber: '12345678901', email: 'ahmet@example.com', jobTitle: 'Technician', companyId: 'c1' },
+  { id: '2', nameSurname: 'Ayşe Demir', idNumber: '98765432109', email: 'ayse@example.com', jobTitle: 'Engineer', companyId: 'c2' },
 ];
 
 function generateId(): string {
@@ -36,7 +36,9 @@ export const useWorkerStore = create<WorkerState>()(
 
       updateWorker: (id: string, data: WorkerFormValues) => {
         set((state) => ({
-          workers: state.workers.map((w) => (w.id === id ? { ...data, id: w.id } : w)),
+          workers: state.workers.map((w) =>
+            w.id === id ? { ...data, id: w.id, companyId: data.companyId ?? w.companyId } : w
+          ),
         }));
       },
 

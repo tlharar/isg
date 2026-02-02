@@ -7,6 +7,8 @@ import {
   IconUsers,
   IconSchool,
   IconUsersGroup,
+  IconBuildingStore,
+  IconBuilding,
 } from '@tabler/icons-react';
 import { useTranslation } from '@shared/i18n';
 import { useAppStore } from '@shared/stores/appStore';
@@ -17,6 +19,8 @@ const navItems = [
   { to: '/personnel', labelKey: 'nav.personnel', icon: IconUsers },
   { to: '/training', labelKey: 'nav.training', icon: IconSchool },
   { to: '/worker', labelKey: 'nav.worker', icon: IconUsersGroup },
+  { to: '/customer', labelKey: 'nav.customer', icon: IconBuildingStore },
+  { to: '/company', labelKey: 'nav.company', icon: IconBuilding },
 ] as const;
 
 interface NavContentProps {

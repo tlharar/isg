@@ -1,8 +1,9 @@
-import { AppShell, Group, Title, useMantineColorScheme, ActionIcon, Burger, SegmentedControl, Box, Image, Button } from '@mantine/core';
-import { IconSun, IconMoon, IconLogout } from '@tabler/icons-react';
+import { AppShell, Group, Title, useMantineColorScheme, ActionIcon, Burger, SegmentedControl, Box, Image, Button, Select } from '@mantine/core';
+import { IconSun, IconMoon, IconLogout, IconBuilding } from '@tabler/icons-react';
 import { useAppStore } from '@shared/stores/appStore';
 import { useAuthStore } from '@shared/stores/authStore';
 import { useTranslation } from '@shared/i18n';
+import { useCompanyStore } from '@store/companyStore';
 
 interface ShellHeaderProps {
   mobileMenuOpened: boolean;
@@ -11,10 +12,16 @@ interface ShellHeaderProps {
 
 export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeaderProps) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const { user } = useAppStore();
+  const { user, selectedCompanyId, setSelectedCompanyId } = useAppStore();
+  const companies = useCompanyStore((s) => s.companies);
   const logout = useAuthStore((s) => s.logout);
   const { t, locale } = useTranslation();
   const setLocale = useAppStore((s) => s.setLocale);
+
+  const companyOptions = [
+    { value: '', label: t('common.allCompanies') },
+    ...companies.map((c) => ({ value: c.id, label: c.name })),
+  ];
 
   return (
     <AppShell.Header>
@@ -33,6 +40,18 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
           </Title>
         </Group>
         <Group gap="xs" wrap="nowrap">
+          <Select
+            size="xs"
+            leftSection={<IconBuilding size={14} />}
+            placeholder={t('common.company')}
+            data={companyOptions}
+            value={selectedCompanyId ?? ''}
+            onChange={(v) => setSelectedCompanyId(v === '' ? null : v)}
+            clearable={false}
+            style={{ minWidth: 140 }}
+            visibleFrom="sm"
+            aria-label={t('common.company')}
+          />
           <SegmentedControl
             size="xs"
             value={locale}
