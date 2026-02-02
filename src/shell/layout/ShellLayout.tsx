@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { AppShell, Drawer } from '@mantine/core';
+import { AppShell, Drawer, Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { ShellSidebar } from '../sidebar/ShellSidebar';
 import { ShellHeader } from '../header/ShellHeader';
@@ -33,7 +33,9 @@ export function ShellLayout() {
         padding="md"
         aria-label="Navigation menu"
       >
-        <NavContent onNavigate={closeDrawer} showLanguageAtBottom />
+        <Box style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <NavContent onNavigate={closeDrawer} showLanguageAtBottom />
+        </Box>
       </Drawer>
     </>
   );

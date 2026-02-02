@@ -28,8 +28,15 @@ export function NavContent({ onNavigate, showLanguageAtBottom }: NavContentProps
   const setLocale = useAppStore((s) => s.setLocale);
 
   return (
-    <Stack gap="md" style={{ height: showLanguageAtBottom ? '100%' : undefined }}>
-      <Box style={{ flex: showLanguageAtBottom ? 1 : undefined }}>
+    <Stack
+      gap="md"
+      style={
+        showLanguageAtBottom
+          ? { height: '100%', display: 'flex', flexDirection: 'column' }
+          : undefined
+      }
+    >
+      <Box style={{ flex: showLanguageAtBottom ? '1 1 0' : undefined, minHeight: showLanguageAtBottom ? 0 : undefined }}>
         <Text fw={600} size="sm" c="dimmed" px="xs" mb="xs">
           {t('nav.modules')}
         </Text>
@@ -49,7 +56,7 @@ export function NavContent({ onNavigate, showLanguageAtBottom }: NavContentProps
         </Stack>
       </Box>
       {showLanguageAtBottom && (
-        <Box pt="md" style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}>
+        <Box pt="md" style={{ borderTop: '1px solid var(--mantine-color-default-border)', marginTop: 'auto', flexShrink: 0 }}>
           <Text fw={500} size="xs" c="dimmed" mb="xs">
             {t('common.language')}
           </Text>
