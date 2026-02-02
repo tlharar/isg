@@ -9,7 +9,7 @@ import { ShellSidebar } from '../sidebar/ShellSidebar';
  * and only shown when the hamburger menu is opened. Clicking a nav link closes the menu.
  */
 export function ShellLayout() {
-  const [mobileMenuOpened, { open: openMobileMenu, close: closeMobileMenu, toggle: toggleMobileMenu }] = useDisclosure(false);
+  const [mobileMenuOpened, { close: closeMobileMenu, toggle: toggleMobileMenu }] = useDisclosure(false);
 
   return (
     <AppShell

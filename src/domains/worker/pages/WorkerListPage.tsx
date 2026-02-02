@@ -39,6 +39,26 @@ const SAMPLE_WORKER_COLUMNS = [
   'jobTitle',
 ] as const;
 
+type WorkerExportRow = Record<(typeof SAMPLE_WORKER_COLUMNS)[number], string>;
+
+function workerToExportRow(w: Worker): WorkerExportRow {
+  const formatDate = (d: Date | undefined): string =>
+    d ? (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10)) : '';
+  return {
+    nameSurname: w.nameSurname,
+    idNumber: w.idNumber,
+    email: w.email,
+    mobileNo: w.mobileNo ?? '',
+    workNo: w.workNo ?? '',
+    employmentStartDate: formatDate(w.employmentStartDate),
+    employmentEndDate: formatDate(w.employmentEndDate),
+    dateOfBirth: formatDate(w.dateOfBirth),
+    gender: w.gender ?? '',
+    visaDate: formatDate(w.visaDate),
+    jobTitle: w.jobTitle ?? '',
+  };
+}
+
 interface WorkerModalFormProps {
   worker: Worker | null;
   onSubmit: (data: WorkerFormValues) => void;
@@ -186,15 +206,8 @@ export function WorkerListPage() {
   const deleteWorker = useWorkerStore((state) => state.deleteWorker);
 
   const handleDownloadTemplate = () => {
-    exportTableToExcel(
-      workers.map((w) => ({
-        nameSurname: w.nameSurname,
-        idNumber: w.idNumber,
-        email: w.email,
-        mobileNo: w.mobileNo ?? '',
-        workNo: w.workNo ?? '',
-        jobTitle: w.jobTitle ?? '',
-      })),
+    exportTableToExcel<WorkerExportRow>(
+      workers.map(workerToExportRow),
       [...SAMPLE_WORKER_COLUMNS],
       'worker-template'
     );
