@@ -1,5 +1,5 @@
 import { Title, Text, Card, Group, SimpleGrid } from '@mantine/core';
-import { IconAlertTriangle, IconUsers, IconSchool } from '@tabler/icons-react';
+import { IconAlertTriangle, IconUsers, IconSchool, IconUsersGroup } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@shared/i18n';
 
@@ -7,6 +7,7 @@ const moduleCards = [
   { to: '/risk', labelKey: 'dashboard.riskLabel', descKey: 'dashboard.riskDesc', icon: IconAlertTriangle },
   { to: '/personnel', labelKey: 'dashboard.personnelLabel', descKey: 'dashboard.personnelDesc', icon: IconUsers },
   { to: '/training', labelKey: 'dashboard.trainingLabel', descKey: 'dashboard.trainingDesc', icon: IconSchool },
+  { to: '/worker', labelKey: 'dashboard.workerLabel', descKey: 'dashboard.workerDesc', icon: IconUsersGroup },
 ] as const;
 
 export function DashboardPage() {

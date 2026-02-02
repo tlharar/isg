@@ -5,6 +5,7 @@ import {
   IconAlertTriangle,
   IconUsers,
   IconSchool,
+  IconUsersGroup,
 } from '@tabler/icons-react';
 import { useTranslation } from '@shared/i18n';
 import { useAppStore } from '@shared/stores/appStore';
@@ -14,6 +15,7 @@ const navItems = [
   { to: '/risk', labelKey: 'nav.risk', icon: IconAlertTriangle },
   { to: '/personnel', labelKey: 'nav.personnel', icon: IconUsers },
   { to: '/training', labelKey: 'nav.training', icon: IconSchool },
+  { to: '/worker', labelKey: 'nav.worker', icon: IconUsersGroup },
 ] as const;
 
 interface NavContentProps {
