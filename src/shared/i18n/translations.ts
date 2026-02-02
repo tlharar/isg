@@ -11,7 +11,7 @@ export const translations = {
       training: 'Training',
       worker: 'Workers',
       customer: 'Customer Management',
-      company: 'Companies',
+      company: 'Company Management',
     },
     dashboard: {
       title: 'Dashboard',
@@ -212,7 +212,7 @@ export const translations = {
       training: 'Eğitim',
       worker: 'İşçiler',
       customer: 'Müşteri Yönetimi',
-      company: 'Firmalar',
+      company: 'Firma Yönetimi',
     },
     dashboard: {
       title: 'Kontrol Paneli',

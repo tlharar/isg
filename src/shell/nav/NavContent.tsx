@@ -15,7 +15,6 @@ import {
   IconAlertTriangle,
   IconUsers,
   IconSchool,
-  IconUsersGroup,
   IconBuildingStore,
   IconBuilding,
   IconChevronDown,
@@ -33,7 +32,6 @@ const mainNavItems = [
   { to: '/risk', labelKey: 'nav.risk', icon: IconAlertTriangle },
   { to: '/personnel', labelKey: 'nav.personnel', icon: IconUsers },
   { to: '/training', labelKey: 'nav.training', icon: IconSchool },
-  { to: '/worker', labelKey: 'nav.worker', icon: IconUsersGroup },
   { to: '/customer', labelKey: 'nav.customer', icon: IconBuildingStore },
 ] as const;
 

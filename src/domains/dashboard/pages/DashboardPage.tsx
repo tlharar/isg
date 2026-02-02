@@ -7,7 +7,7 @@ const moduleCards = [
   { to: '/risk', labelKey: 'dashboard.riskLabel', descKey: 'dashboard.riskDesc', icon: IconAlertTriangle },
   { to: '/personnel', labelKey: 'dashboard.personnelLabel', descKey: 'dashboard.personnelDesc', icon: IconUsers },
   { to: '/training', labelKey: 'dashboard.trainingLabel', descKey: 'dashboard.trainingDesc', icon: IconSchool },
-  { to: '/worker', labelKey: 'dashboard.workerLabel', descKey: 'dashboard.workerDesc', icon: IconUsersGroup },
+  { to: '/company/employees', labelKey: 'dashboard.workerLabel', descKey: 'dashboard.workerDesc', icon: IconUsersGroup },
   { to: '/customer', labelKey: 'dashboard.customerLabel', descKey: 'dashboard.customerDesc', icon: IconBuildingStore },
   { to: '/company', labelKey: 'dashboard.companyLabel', descKey: 'dashboard.companyDesc', icon: IconBuilding },
 ] as const;
