@@ -24,7 +24,7 @@ export function RiskListPage() {
       <Stack gap="md" mb="md">
         <Group justify="space-between" wrap="wrap" gap="sm">
           <div>
-            <Title order={2} size={{ base: 'h3', sm: 'h2' }}>{t('risk.title')}</Title>
+            <Title order={2}>{t('risk.title')}</Title>
             <Text c="dimmed" size="sm">{t('risk.subtitle')}</Text>
           </div>
           <Group gap="xs" wrap="wrap">

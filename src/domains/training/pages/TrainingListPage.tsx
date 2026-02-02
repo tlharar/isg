@@ -8,7 +8,7 @@ export function TrainingListPage() {
 
   return (
     <>
-      <Title order={2} mb="xs" size={{ base: 'h3', sm: 'h2' }}>{t('training.title')}</Title>
+      <Title order={2} mb="xs">{t('training.title')}</Title>
       <Text c="dimmed" size="sm" mb="lg">{t('training.subtitle')}</Text>
       <Button component={Link} to="/training/new" leftSection={<IconPlus size={16} />} size="sm">
         {t('training.newTraining')}

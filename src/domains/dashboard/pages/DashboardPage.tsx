@@ -14,7 +14,7 @@ export function DashboardPage() {
 
   return (
     <>
-      <Title order={2} mb="md" size={{ base: 'h3', sm: 'h2' }}>
+      <Title order={2} mb="md">
         {t('dashboard.title')}
       </Title>
       <Text c="dimmed" mb="lg" size="sm">

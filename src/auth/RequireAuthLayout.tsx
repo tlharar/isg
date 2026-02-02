@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@shared/stores/authStore';
 import { ShellLayout } from '@shell/layout/ShellLayout';
 
@@ -9,9 +9,5 @@ export function RequireAuthLayout() {
     return <Navigate to="/" replace />;
   }
 
-  return (
-    <ShellLayout>
-      <Outlet />
-    </ShellLayout>
-  );
+  return <ShellLayout />;
 }

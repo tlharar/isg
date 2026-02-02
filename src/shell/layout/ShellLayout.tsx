@@ -6,7 +6,7 @@ import { ShellHeader } from '../header/ShellHeader';
 import { NavContent } from '../nav/NavContent';
 
 export function ShellLayout() {
-  const [drawerOpened, { open: openDrawer, close: closeDrawer, toggle }] = useDisclosure(false);
+  const [drawerOpened, { close: closeDrawer, toggle }] = useDisclosure(false);
 
   return (
     <>

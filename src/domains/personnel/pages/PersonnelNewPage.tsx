@@ -18,7 +18,7 @@ export function PersonnelNewPage() {
       >
         {t('personnel.newPage.back')}
       </Button>
-      <Title order={2} mb="xs" size={{ base: 'h3', sm: 'h2' }}>{t('personnel.newPage.title')}</Title>
+      <Title order={2} mb="xs">{t('personnel.newPage.title')}</Title>
       <Text c="dimmed" size="sm" mb="lg">{t('personnel.newPage.placeholder')}</Text>
     </>
   );

@@ -18,7 +18,7 @@ export function TrainingNewPage() {
       >
         {t('training.newPage.back')}
       </Button>
-      <Title order={2} mb="xs" size={{ base: 'h3', sm: 'h2' }}>{t('training.newPage.title')}</Title>
+      <Title order={2} mb="xs">{t('training.newPage.title')}</Title>
       <Text c="dimmed" size="sm" mb="lg">{t('training.newPage.placeholder')}</Text>
     </>
   );

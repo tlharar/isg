@@ -18,7 +18,7 @@ export function RiskNewPage() {
       >
         {t('risk.newPage.back')}
       </Button>
-      <Title order={2} mb="xs" size={{ base: 'h3', sm: 'h2' }}>{t('risk.newPage.title')}</Title>
+      <Title order={2} mb="xs">{t('risk.newPage.title')}</Title>
       <Text c="dimmed" size="sm" mb="lg">{t('risk.newPage.placeholder')}</Text>
     </>
   );
