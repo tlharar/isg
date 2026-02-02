@@ -1,16 +1,22 @@
 import { Outlet } from 'react-router-dom';
 import { AppShell } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { useIdleTimer } from '@shared/hooks/useIdleTimer';
 import { ShellHeader } from '../header/ShellHeader';
 import { ShellSidebar } from '../sidebar/ShellSidebar';
+
+const IDLE_LOGOUT_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
  * App layout: header + navbar (sidebar). On mobile, the navbar is collapsed by default
  * and only shown when the hamburger menu is opened. Clicking a nav link closes the menu.
  * Background: light gray (#f8f9fa) for depth; sidebar white with border.
+ * Idle session timeout: logs out and redirects to /login after 15 minutes of inactivity.
  */
 export function ShellLayout() {
   const [mobileMenuOpened, { close: closeMobileMenu, toggle: toggleMobileMenu }] = useDisclosure(false);
+
+  useIdleTimer(IDLE_LOGOUT_MS);
 
   return (
     <AppShell

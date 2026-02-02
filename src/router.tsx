@@ -3,6 +3,8 @@ import { AuthRoot } from '@auth/AuthRoot';
 import { LoginOrRedirect } from '@auth/LoginOrRedirect';
 import { SignUpOrRedirect } from '@auth/SignUpOrRedirect';
 import { RequireAuthLayout } from '@auth/RequireAuthLayout';
+import { RequireAdmin } from '@auth/RequireAdmin';
+import { PlaceholderPage } from '@shared/components/PlaceholderPage';
 import { DashboardPage } from '@domains/dashboard/pages/DashboardPage';
 import { RiskListPage } from '@domains/risk/pages/RiskListPage';
 import { RiskNewPage } from '@domains/risk/pages/RiskNewPage';
@@ -18,6 +20,10 @@ import { UnitsPage } from '@domains/company/pages/UnitsPage';
 import { SubcontractorsPage } from '@domains/company/pages/SubcontractorsPage';
 import { RepresentativePage } from '@domains/company/pages/RepresentativePage';
 import { MailGroupsPage } from '@domains/company/pages/MailGroupsPage';
+import { SafetyLayout } from '@domains/safety/layout/SafetyLayout';
+import { HealthLayout } from '@domains/health/layout/HealthLayout';
+import { ArchiveLayout } from '@domains/archive/layout/ArchiveLayout';
+import { ExtraLayout } from '@domains/extra/layout/ExtraLayout';
 
 export const router = createBrowserRouter([
   {
@@ -53,6 +59,76 @@ export const router = createBrowserRouter([
               { path: 'mail-groups', element: <MailGroupsPage /> },
             ],
           },
+          {
+            path: 'safety',
+            element: <SafetyLayout />,
+            children: [
+              { index: true, element: <Navigate to="/safety/plans/annual-work" replace /> },
+              { path: 'plans/annual-work', element: <PlaceholderPage titleKey="nav.safetyPlansAnnualWork" /> },
+              { path: 'plans/annual-training', element: <PlaceholderPage titleKey="nav.safetyPlansAnnualTraining" /> },
+              { path: 'ppe/equipment-list', element: <PlaceholderPage titleKey="nav.safetyPpeEquipmentList" /> },
+              { path: 'ppe/custody-records', element: <PlaceholderPage titleKey="nav.safetyPpeCustodyRecords" /> },
+              { path: 'ppe/requests', element: <PlaceholderPage titleKey="nav.safetyPpeRequests" /> },
+              { path: 'incident/near-miss', element: <PlaceholderPage titleKey="nav.safetyIncidentNearMiss" /> },
+              { path: 'incident/accident-records', element: <PlaceholderPage titleKey="nav.safetyIncidentAccidentRecords" /> },
+              { path: 'audit/dof-list', element: <PlaceholderPage titleKey="nav.safetyAuditDofList" /> },
+              { path: 'audit/site-audit', element: <PlaceholderPage titleKey="nav.safetyAuditSiteAudit" /> },
+              { path: 'audit/nonconformities', element: <PlaceholderPage titleKey="nav.safetyAuditNonconformities" /> },
+              { path: 'audit/checklists', element: <PlaceholderPage titleKey="nav.safetyAuditChecklists" /> },
+              { path: 'emergency/plans', element: <PlaceholderPage titleKey="nav.safetyEmergencyPlans" /> },
+              { path: 'emergency/teams', element: <PlaceholderPage titleKey="nav.safetyEmergencyTeams" /> },
+              { path: 'emergency/drills', element: <PlaceholderPage titleKey="nav.safetyEmergencyDrills" /> },
+              { path: 'emergency/map', element: <PlaceholderPage titleKey="nav.safetyEmergencyMap" /> },
+              { path: 'equipment/list', element: <PlaceholderPage titleKey="nav.safetyEquipmentList" /> },
+              { path: 'equipment/periodic', element: <PlaceholderPage titleKey="nav.safetyEquipmentPeriodic" /> },
+              { path: 'board/meetings', element: <PlaceholderPage titleKey="nav.safetyBoardMeetings" /> },
+              { path: 'board/suggestions', element: <PlaceholderPage titleKey="nav.safetyBoardSuggestions" /> },
+            ],
+          },
+          {
+            path: 'health',
+            element: <HealthLayout />,
+            children: [
+              { index: true, element: <Navigate to="/health/prescription/write" replace /> },
+              { path: 'prescription/write', element: <PlaceholderPage titleKey="nav.healthPrescriptionWrite" /> },
+              { path: 'prescription/query', element: <PlaceholderPage titleKey="nav.healthPrescriptionQuery" /> },
+              { path: 'prescription/medication-list', element: <PlaceholderPage titleKey="nav.healthPrescriptionMedicationList" /> },
+              { path: 'examination/polyclinic', element: <PlaceholderPage titleKey="nav.healthExaminationPolyclinic" /> },
+              { path: 'examination/entry-periodic', element: <PlaceholderPage titleKey="nav.healthExaminationEntryPeriodic" /> },
+              { path: 'examination/vaccination', element: <PlaceholderPage titleKey="nav.healthExaminationVaccination" /> },
+              { path: 'examination/appointments', element: <PlaceholderPage titleKey="nav.healthExaminationAppointments" /> },
+              { path: 'other/tests', element: <PlaceholderPage titleKey="nav.healthOtherTests" /> },
+              { path: 'other/medicine-cabinet', element: <PlaceholderPage titleKey="nav.healthOtherMedicineCabinet" /> },
+            ],
+          },
+          {
+            path: 'archive',
+            element: <ArchiveLayout />,
+            children: [
+              { index: true, element: <Navigate to="/archive/documents/ohs" replace /> },
+              { path: 'documents/ohs', element: <PlaceholderPage titleKey="nav.archiveDocsOhs" /> },
+              { path: 'documents/employee', element: <PlaceholderPage titleKey="nav.archiveDocsEmployee" /> },
+              { path: 'documents/company', element: <PlaceholderPage titleKey="nav.archiveDocsCompany" /> },
+              { path: 'reports/training', element: <PlaceholderPage titleKey="nav.reportsTraining" /> },
+              { path: 'reports/accident-stats', element: <PlaceholderPage titleKey="nav.reportsAccidentStats" /> },
+              { path: 'reports/prescription', element: <PlaceholderPage titleKey="nav.reportsPrescription" /> },
+              { path: 'reports/monthly-activity', element: <PlaceholderPage titleKey="nav.reportsMonthlyActivity" /> },
+            ],
+          },
+          {
+            path: 'extra',
+            element: <ExtraLayout />,
+            children: [
+              { index: true, element: <Navigate to="/extra/remote-training/content" replace /> },
+              { path: 'remote-training/content', element: <PlaceholderPage titleKey="nav.extraRemoteTrainingContent" /> },
+              { path: 'remote-training/exams', element: <PlaceholderPage titleKey="nav.extraRemoteTrainingExams" /> },
+              { path: 'remote-training/assignments', element: <PlaceholderPage titleKey="nav.extraRemoteTrainingAssignments" /> },
+              { path: 'visitor/records', element: <PlaceholderPage titleKey="nav.extraVisitorRecords" /> },
+              { path: 'visitor/cards', element: <PlaceholderPage titleKey="nav.extraVisitorCards" /> },
+              { path: 'announcements', element: <PlaceholderPage titleKey="nav.extraAnnouncements" /> },
+            ],
+          },
+          { path: 'settings', element: <RequireAdmin><PlaceholderPage titleKey="nav.userManagement" /></RequireAdmin> },
         ],
       },
     ],
