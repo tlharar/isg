@@ -40,6 +40,7 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
           </Title>
         </Group>
         <Group gap="xs" wrap="nowrap">
+          {/* Desktop-only: Company Select; mobile uses same control in sidebar */}
           <Select
             size="xs"
             leftSection={<IconBuilding size={14} />}
