@@ -1,45 +1,34 @@
 import { Outlet } from 'react-router-dom';
-import { AppShell, Drawer, Box } from '@mantine/core';
+import { AppShell } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { ShellSidebar } from '../sidebar/ShellSidebar';
 import { ShellHeader } from '../header/ShellHeader';
-import { NavContent } from '../nav/NavContent';
+import { ShellSidebar } from '../sidebar/ShellSidebar';
 
+/**
+ * App layout: header + navbar (sidebar). On mobile, the navbar is collapsed by default
+ * and only shown when the hamburger menu is opened. Clicking a nav link closes the menu.
+ */
 export function ShellLayout() {
-  const [drawerOpened, { close: closeDrawer, toggle }] = useDisclosure(false);
+  const [mobileMenuOpened, { open: openMobileMenu, close: closeMobileMenu, toggle: toggleMobileMenu }] = useDisclosure(false);
 
   return (
-    <>
-      <AppShell
-        header={{ height: { base: 56, sm: 56 } }}
-        navbar={{
-          width: 260,
-          breakpoint: 'sm',
-        }}
-        padding={{ base: 'sm', sm: 'md' }}
-      >
-        <ShellHeader mobileMenuOpened={drawerOpened} onMobileMenuToggle={toggle} />
-        <ShellSidebar />
-        <AppShell.Main>
-          <Outlet />
-        </AppShell.Main>
-      </AppShell>
-      <Drawer
-        opened={drawerOpened}
-        onClose={closeDrawer}
-        title={null}
-        size="260px"
-        hiddenFrom="sm"
-        padding="md"
-        aria-label="Navigation menu"
-        styles={{
-          body: { height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' },
-        }}
-      >
-        <Box style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <NavContent onNavigate={closeDrawer} showLanguageAtBottom />
-        </Box>
-      </Drawer>
-    </>
+    <AppShell
+      header={{ height: { base: 56, sm: 56 } }}
+      navbar={{
+        width: 280,
+        breakpoint: 'sm',
+        collapsed: { mobile: !mobileMenuOpened },
+      }}
+      padding={{ base: 'sm', sm: 'md' }}
+    >
+      <ShellHeader
+        mobileMenuOpened={mobileMenuOpened}
+        onMobileMenuToggle={toggleMobileMenu}
+      />
+      <ShellSidebar onCloseMobileNav={closeMobileMenu} />
+      <AppShell.Main>
+        <Outlet />
+      </AppShell.Main>
+    </AppShell>
   );
 }
