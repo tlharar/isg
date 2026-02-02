@@ -32,11 +32,11 @@ export function NavContent({ onNavigate, showLanguageAtBottom }: NavContentProps
       gap="md"
       style={
         showLanguageAtBottom
-          ? { height: '100%', display: 'flex', flexDirection: 'column' }
+          ? { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
           : undefined
       }
     >
-      <Box style={{ flex: showLanguageAtBottom ? '1 1 0' : undefined, minHeight: showLanguageAtBottom ? 0 : undefined }}>
+      <Box style={showLanguageAtBottom ? { flexShrink: 0 } : undefined}>
         <Text fw={600} size="sm" c="dimmed" px="xs" mb="xs">
           {t('nav.modules')}
         </Text>

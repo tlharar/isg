@@ -32,8 +32,11 @@ export function ShellLayout() {
         hiddenFrom="sm"
         padding="md"
         aria-label="Navigation menu"
+        styles={{
+          body: { height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' },
+        }}
       >
-        <Box style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <NavContent onNavigate={closeDrawer} showLanguageAtBottom />
         </Box>
       </Drawer>

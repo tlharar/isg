@@ -42,6 +42,7 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
               { label: t('common.tr'), value: 'tr' },
             ]}
             aria-label={t('common.language')}
+            visibleFrom="sm"
           />
           <ActionIcon
             variant="default"
