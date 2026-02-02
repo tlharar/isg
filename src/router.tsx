@@ -14,7 +14,13 @@ import { WorkerListPage } from '@domains/worker/pages/WorkerListPage';
 import { WorkerNewPage } from '@domains/worker/pages/WorkerNewPage';
 import { WorkerEditPage } from '@domains/worker/pages/WorkerEditPage';
 import { CustomerListPage } from '@domains/customer/pages/CustomerListPage';
+import { CompanyLayout } from '@domains/company/layout/CompanyLayout';
 import { CompanyListPage } from '@domains/company/pages/CompanyListPage';
+import { CompanyEmployeesPage } from '@domains/company/pages/CompanyEmployeesPage';
+import { UnitsPage } from '@domains/company/pages/UnitsPage';
+import { SubcontractorsPage } from '@domains/company/pages/SubcontractorsPage';
+import { RepresentativePage } from '@domains/company/pages/RepresentativePage';
+import { MailGroupsPage } from '@domains/company/pages/MailGroupsPage';
 
 export const router = createBrowserRouter([
   {
@@ -38,7 +44,18 @@ export const router = createBrowserRouter([
           { path: 'worker/new', element: <WorkerNewPage /> },
           { path: 'worker/:id/edit', element: <WorkerEditPage /> },
           { path: 'customer', element: <CustomerListPage /> },
-          { path: 'company', element: <CompanyListPage /> },
+          {
+            path: 'company',
+            element: <CompanyLayout />,
+            children: [
+              { index: true, element: <CompanyListPage /> },
+              { path: 'employees', element: <CompanyEmployeesPage /> },
+              { path: 'units', element: <UnitsPage /> },
+              { path: 'subcontractors', element: <SubcontractorsPage /> },
+              { path: 'representative', element: <RepresentativePage /> },
+              { path: 'mail-groups', element: <MailGroupsPage /> },
+            ],
+          },
         ],
       },
     ],

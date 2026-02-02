@@ -23,5 +23,18 @@ export const theme = createTheme({
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
     fontWeight: '600',
   },
-  defaultRadius: 'sm',
+  defaultRadius: 'md',
+  components: {
+    Paper: {
+      defaultProps: {
+        shadow: 'sm',
+        radius: 'md',
+        withBorder: false,
+      },
+    },
+  },
+  other: {
+    appBackground: '#f8f9fa',
+    sidebarBackground: '#ffffff',
+  },
 });
