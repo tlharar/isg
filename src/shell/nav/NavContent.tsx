@@ -13,11 +13,10 @@ import {
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useMediaQuery, useDisclosure } from '@mantine/hooks';
 import {
-  IconLayoutDashboard,
+  IconHome,
   IconAlertTriangle,
   IconUsers,
   IconSchool,
-  IconBuildingStore,
   IconBuilding,
   IconChevronDown,
   IconChevronRight,
@@ -30,6 +29,7 @@ import {
   IconArchive,
   IconPuzzle,
   IconSettings,
+  IconBriefcase,
 } from '@tabler/icons-react';
 import { useTranslation } from '@shared/i18n';
 import { useAppStore } from '@shared/stores/appStore';
@@ -47,11 +47,9 @@ function canAccess(userRole: UserRole | undefined, allowedRoles: UserRole[]): bo
 }
 
 const mainNavItems = [
-  { to: '/dashboard', labelKey: 'nav.dashboard', icon: IconLayoutDashboard, allowedRoles: ALL_ROLES },
+  { to: '/dashboard', labelKey: 'nav.home', icon: IconHome, allowedRoles: ALL_ROLES },
   { to: '/risk', labelKey: 'nav.risk', icon: IconAlertTriangle, allowedRoles: SAFETY_ROLES },
-  { to: '/personnel', labelKey: 'nav.personnel', icon: IconUsers, allowedRoles: ALL_ROLES },
   { to: '/training', labelKey: 'nav.training', icon: IconSchool, allowedRoles: SAFETY_ROLES },
-  { to: '/customer', labelKey: 'nav.customer', icon: IconBuildingStore, allowedRoles: ALL_ROLES },
 ] as const;
 
 const companySubItems = [
@@ -641,6 +639,49 @@ export function NavContent({ onNavigate }: NavContentProps) {
                 </Collapse>
               </Box>
             )}
+
+            {/* Satış & CRM - ADMIN only */}
+            {canAccess(userRole, ADMIN_ONLY) &&
+              (useClickHandler ? (
+                <UnstyledButton
+                  onClick={() => handleNavClick('/crm/leads')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--mantine-radius-sm)',
+                    fontWeight: 500,
+                    backgroundColor: location.pathname.startsWith('/crm') ? 'var(--mantine-primary-light)' : 'transparent',
+                    color: location.pathname.startsWith('/crm')
+                      ? 'var(--mantine-primary-light-color)'
+                      : 'var(--mantine-color-text)',
+                  }}
+                >
+                  <IconBriefcase size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
+                  <span>{t('nav.crm')}</span>
+                </UnstyledButton>
+              ) : (
+                <UnstyledButton
+                  component={Link}
+                  to="/crm/leads"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--mantine-radius-sm)',
+                    fontWeight: 500,
+                    backgroundColor: location.pathname.startsWith('/crm') ? 'var(--mantine-primary-light)' : 'transparent',
+                    color: location.pathname.startsWith('/crm')
+                      ? 'var(--mantine-primary-light-color)'
+                      : 'var(--mantine-color-text)',
+                  }}
+                >
+                  <IconBriefcase size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
+                  <span>{t('nav.crm')}</span>
+                </UnstyledButton>
+              ))}
 
             {/* Settings / User Management - ADMIN only */}
             {canAccess(userRole, ADMIN_ONLY) &&

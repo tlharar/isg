@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { CompanyFormValues } from '@domains/company/schemas/companySchema';
 
 export type CompanyStatus = 'active' | 'passive';
+export type HazardClass = 'Çok Tehlikeli' | 'Tehlikeli' | 'Az Tehlikeli';
 
 export interface Company {
   id: string;
@@ -14,6 +15,8 @@ export interface Company {
   city: string;
   district: string;
   status: CompanyStatus;
+  /** Hazard Class (Tehlike Sınıfı) */
+  hazardClass?: HazardClass;
   /** Active employee count from system */
   employeeCountSystem: number;
   /** Active employee count from ISG Katip */
@@ -36,6 +39,7 @@ const INITIAL_COMPANIES: Company[] = [
     city: 'istanbul',
     district: 'kadikoy',
     status: 'active',
+    hazardClass: 'Tehlikeli',
     employeeCountSystem: 45,
     employeeCountIsgKatip: 42,
   },
@@ -48,6 +52,7 @@ const INITIAL_COMPANIES: Company[] = [
     city: 'ankara',
     district: 'cankaya',
     status: 'active',
+    hazardClass: 'Çok Tehlikeli',
     employeeCountSystem: 120,
     employeeCountIsgKatip: 118,
   },
@@ -60,6 +65,7 @@ const INITIAL_COMPANIES: Company[] = [
     city: 'izmir',
     district: 'konak',
     status: 'passive',
+    hazardClass: 'Az Tehlikeli',
     employeeCountSystem: 0,
     employeeCountIsgKatip: 0,
   },
@@ -68,6 +74,7 @@ const INITIAL_COMPANIES: Company[] = [
 interface CompanyState {
   companies: Company[];
   addCompany: (data: CompanyFormValues) => Company;
+  addCompanyBulk: (companies: Omit<Company, 'id' | 'employeeCountSystem' | 'employeeCountIsgKatip'>[]) => void;
   updateCompany: (id: string, data: CompanyFormValues) => void;
   deleteCompany: (id: string) => void;
   getCompanyById: (id: string) => Company | undefined;
@@ -87,6 +94,16 @@ export const useCompanyStore = create<CompanyState>()(
         };
         set((state) => ({ companies: [...state.companies, company] }));
         return company;
+      },
+
+      addCompanyBulk: (companiesData) => {
+        const newCompanies: Company[] = companiesData.map((data) => ({
+          ...data,
+          id: generateId(),
+          employeeCountSystem: 0,
+          employeeCountIsgKatip: 0,
+        }));
+        set((state) => ({ companies: [...state.companies, ...newCompanies] }));
       },
 
       updateCompany: (id: string, data: CompanyFormValues) => {

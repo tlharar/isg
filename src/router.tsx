@@ -5,14 +5,10 @@ import { SignUpOrRedirect } from '@auth/SignUpOrRedirect';
 import { RequireAuthLayout } from '@auth/RequireAuthLayout';
 import { RequireAdmin } from '@auth/RequireAdmin';
 import { PlaceholderPage } from '@shared/components/PlaceholderPage';
-import { DashboardPage } from '@domains/dashboard/pages/DashboardPage';
+import { HomePage } from '@domains/dashboard/pages/HomePage';
 import { RiskListPage } from '@domains/risk/pages/RiskListPage';
 import { RiskNewPage } from '@domains/risk/pages/RiskNewPage';
-import { PersonnelListPage } from '@domains/personnel/pages/PersonnelListPage';
-import { PersonnelNewPage } from '@domains/personnel/pages/PersonnelNewPage';
-import { TrainingListPage } from '@domains/training/pages/TrainingListPage';
-import { TrainingNewPage } from '@domains/training/pages/TrainingNewPage';
-import { CustomerListPage } from '@domains/customer/pages/CustomerListPage';
+import { EducationPage } from '@domains/training/pages/EducationPage';
 import { CompanyLayout } from '@domains/company/layout/CompanyLayout';
 import { CompanyListPage } from '@domains/company/pages/CompanyListPage';
 import { CompanyEmployeesPage } from '@domains/company/pages/CompanyEmployeesPage';
@@ -24,6 +20,8 @@ import { SafetyLayout } from '@domains/safety/layout/SafetyLayout';
 import { HealthLayout } from '@domains/health/layout/HealthLayout';
 import { ArchiveLayout } from '@domains/archive/layout/ArchiveLayout';
 import { ExtraLayout } from '@domains/extra/layout/ExtraLayout';
+import { CrmLayout } from '@domains/crm/layout/CrmLayout';
+import { LeadOsgbPage } from '@domains/crm/pages/LeadOsgbPage';
 
 export const router = createBrowserRouter([
   {
@@ -36,17 +34,24 @@ export const router = createBrowserRouter([
         element: <RequireAuthLayout />,
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
-          { path: 'dashboard', element: <DashboardPage /> },
+          { path: 'dashboard', element: <HomePage /> },
           { path: 'risk', element: <RiskListPage /> },
           { path: 'risk/new', element: <RiskNewPage /> },
-          { path: 'personnel', element: <PersonnelListPage /> },
-          { path: 'personnel/new', element: <PersonnelNewPage /> },
-          { path: 'training', element: <TrainingListPage /> },
-          { path: 'training/new', element: <TrainingNewPage /> },
+          { path: 'personnel', element: <Navigate to="/company/employees" replace /> },
+          { path: 'personnel/new', element: <Navigate to="/company/employees" replace /> },
+          { path: 'training', element: <EducationPage /> },
           { path: 'worker', element: <Navigate to="/company/employees" replace /> },
           { path: 'worker/new', element: <Navigate to="/company/employees" replace /> },
           { path: 'worker/:id/edit', element: <Navigate to="/company/employees" replace /> },
-          { path: 'customer', element: <CustomerListPage /> },
+          { path: 'customer', element: <Navigate to="/company" replace /> },
+          {
+            path: 'crm',
+            element: <RequireAdmin><CrmLayout /></RequireAdmin>,
+            children: [
+              { index: true, element: <Navigate to="/crm/leads" replace /> },
+              { path: 'leads', element: <LeadOsgbPage /> },
+            ],
+          },
           {
             path: 'company',
             element: <CompanyLayout />,
