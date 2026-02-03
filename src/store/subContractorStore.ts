@@ -8,8 +8,19 @@ export interface SubContractor {
   mainCompanyId: string;
   name: string;
   sgkNumber: string;
+  /** Vergi No */
+  taxNumber: string;
+  /** Vergi Dairesi */
+  taxOffice: string;
+  /** Firma Yetkilisi */
+  authorizedPerson: string;
+  /** İletişim Telefonu */
+  phone: string;
+  /** İletişim E-Postası */
+  email: string;
   contractStartDate: Date;
   contractEndDate: Date;
+  /** Yapılan İş */
   workDescription: string;
   createdAt: Date;
   updatedAt: Date;
@@ -44,6 +55,11 @@ const MOCK_SUBCONTRACTORS: SubContractor[] = [
     mainCompanyId: 'c1',
     name: 'Yemekhane A.Ş.',
     sgkNumber: 'SGK-101',
+    taxNumber: '1234567890',
+    taxOffice: 'Kadıköy',
+    authorizedPerson: 'Ahmet Yılmaz',
+    phone: '+90 216 123 45 67',
+    email: 'info@yemekhane.com',
     contractStartDate: lastYear,
     contractEndDate: nextYear,
     workDescription: 'Personel yemek hizmeti, kantin işletmesi',
@@ -55,6 +71,11 @@ const MOCK_SUBCONTRACTORS: SubContractor[] = [
     mainCompanyId: 'c1',
     name: 'Güvenlik Ltd. Şti.',
     sgkNumber: 'SGK-102',
+    taxNumber: '',
+    taxOffice: '',
+    authorizedPerson: '',
+    phone: '',
+    email: '',
     contractStartDate: new Date(now.getFullYear(), 0, 1),
     contractEndDate: nextYear,
     workDescription: 'Tesis güvenlik ve giriş-çıkış kontrolü',
@@ -66,6 +87,11 @@ const MOCK_SUBCONTRACTORS: SubContractor[] = [
     mainCompanyId: 'c1',
     name: 'Temizlik Hizmetleri A.Ş.',
     sgkNumber: 'SGK-103',
+    taxNumber: '',
+    taxOffice: '',
+    authorizedPerson: '',
+    phone: '',
+    email: '',
     contractStartDate: new Date(now.getFullYear() - 2, 5, 1),
     contractEndDate: new Date(now.getFullYear(), 4, 31),
     workDescription: 'Ofis ve üretim alanı temizlik hizmeti',
@@ -77,6 +103,11 @@ const MOCK_SUBCONTRACTORS: SubContractor[] = [
     mainCompanyId: 'c2',
     name: 'İnşaat Taahhüt Ltd.',
     sgkNumber: 'SGK-201',
+    taxNumber: '',
+    taxOffice: '',
+    authorizedPerson: '',
+    phone: '',
+    email: '',
     contractStartDate: lastYear,
     contractEndDate: nextMonth,
     workDescription: 'İnşaat iskele kurulumu ve bakım',
@@ -94,6 +125,11 @@ export const useSubContractorStore = create<SubContractorState>()(
         const now_ = new Date();
         const newItem: SubContractor = {
           ...data,
+          taxNumber: data.taxNumber ?? '',
+          taxOffice: data.taxOffice ?? '',
+          authorizedPerson: data.authorizedPerson ?? '',
+          phone: data.phone ?? '',
+          email: data.email ?? '',
           id: generateId(),
           createdAt: now_,
           updatedAt: now_,

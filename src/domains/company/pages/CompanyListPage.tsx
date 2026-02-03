@@ -14,6 +14,7 @@ import {
   Textarea,
   Select,
   Badge,
+  Tabs,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconDots, IconEdit, IconTrash, IconDownload, IconUpload, IconLink, IconCheck } from '@tabler/icons-react';
@@ -22,44 +23,51 @@ import { useTranslation } from '@shared/i18n';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { companyFormSchema, type CompanyFormValues } from '../schemas/companySchema';
-import { useCompanyStore, type Company, type CompanyStatus, type HazardClass } from '@store/companyStore';
+import { useCompanyStore, type Company, type CompanyStatus, type DangerClass } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
 import * as XLSX from 'xlsx';
 
-/** Mock cities (İl) for filter */
+/** Mock cities (İl) for form and filter */
 const MOCK_CITIES = [
   { value: '', label: '—' },
-  { value: 'istanbul', label: 'Istanbul' },
-  { value: 'ankara', label: 'Ankara' },
-  { value: 'izmir', label: 'Izmir' },
+  { value: 'İstanbul', label: 'İstanbul' },
+  { value: 'Ankara', label: 'Ankara' },
+  { value: 'İzmir', label: 'İzmir' },
 ];
 
-/** Mock districts (İlçe) for filter */
+/** Mock districts (İlçe) by city */
 const MOCK_DISTRICTS: Record<string, { value: string; label: string }[]> = {
   '': [{ value: '', label: '—' }],
-  istanbul: [
+  'İstanbul': [
     { value: '', label: '—' },
-    { value: 'kadikoy', label: 'Kadıköy' },
-    { value: 'besiktas', label: 'Beşiktaş' },
-    { value: 'uskudar', label: 'Üsküdar' },
+    { value: 'Kadıköy', label: 'Kadıköy' },
+    { value: 'Beşiktaş', label: 'Beşiktaş' },
+    { value: 'Üsküdar', label: 'Üsküdar' },
   ],
-  ankara: [
+  'Ankara': [
     { value: '', label: '—' },
-    { value: 'cankaya', label: 'Çankaya' },
-    { value: 'kecoren', label: 'Keçiören' },
+    { value: 'Çankaya', label: 'Çankaya' },
+    { value: 'Keçiören', label: 'Keçiören' },
   ],
-  izmir: [
+  'İzmir': [
     { value: '', label: '—' },
-    { value: 'konak', label: 'Konak' },
-    { value: 'karsiyaka', label: 'Karşıyaka' },
+    { value: 'Konak', label: 'Konak' },
+    { value: 'Karşıyaka', label: 'Karşıyaka' },
   ],
 };
 
+/** Tehlike Sınıfı options */
+const DANGER_CLASS_OPTIONS: { value: DangerClass; label: string }[] = [
+  { value: 'Az Tehlikeli', label: 'Az Tehlikeli' },
+  { value: 'Tehlikeli', label: 'Tehlikeli' },
+  { value: 'Çok Tehlikeli', label: 'Çok Tehlikeli' },
+];
+
 /**
- * Get hazard class badge color
+ * Get danger class (Tehlike Sınıfı) badge color
  */
-function getHazardClassColor(hazardClass?: HazardClass): string {
-  switch (hazardClass) {
+function getDangerClassColor(dangerClass?: DangerClass): string {
+  switch (dangerClass) {
     case 'Çok Tehlikeli':
       return 'red';
     case 'Tehlikeli':
@@ -74,7 +82,7 @@ function getHazardClassColor(hazardClass?: HazardClass): string {
 /**
  * Normalize hazard class string from Excel
  */
-function normalizeHazardClass(value: string): HazardClass | undefined {
+function normalizeDangerClass(value: string): DangerClass | undefined {
   const normalized = value?.trim().toLowerCase();
   if (normalized.includes('çok') || normalized.includes('cok')) return 'Çok Tehlikeli';
   if (normalized.includes('tehlikeli')) return 'Tehlikeli';
@@ -87,10 +95,10 @@ function normalizeHazardClass(value: string): HazardClass | undefined {
  */
 function normalizeCity(value: string): string {
   const normalized = value?.trim().toLowerCase();
-  if (normalized.includes('istanbul') || normalized.includes('İstanbul')) return 'istanbul';
-  if (normalized.includes('ankara')) return 'ankara';
-  if (normalized.includes('izmir') || normalized.includes('İzmir')) return 'izmir';
-  return normalized;
+  if (normalized.includes('istanbul') || normalized.includes('İstanbul')) return 'İstanbul';
+  if (normalized.includes('ankara')) return 'Ankara';
+  if (normalized.includes('izmir') || normalized.includes('İzmir')) return 'İzmir';
+  return value?.trim() || '';
 }
 
 interface CompanyModalFormProps {
@@ -106,80 +114,147 @@ function CompanyModalForm({ company, onSubmit, onCancel, t }: CompanyModalFormPr
     defaultValues: company
       ? {
           name: company.name,
-          taxNo: company.taxNo,
-          address: company.address,
-          sgkNo: company.sgkNo,
-          city: company.city,
-          district: company.district,
+          naceCode: company.naceCode ?? '',
+          dangerClass: company.dangerClass,
+          sector: company.sector ?? '',
+          sgkSicilNo: company.sgkSicilNo,
+          taxOffice: company.taxOffice ?? '',
+          taxNumber: company.taxNumber ?? '',
+          city: company.city ?? '',
+          district: company.district ?? '',
+          address: company.address ?? '',
+          phone: company.phone ?? '',
+          email: company.email ?? '',
           status: company.status,
         }
       : {
           name: '',
-          taxNo: '',
-          address: '',
-          sgkNo: '',
+          naceCode: '',
+          dangerClass: undefined,
+          sector: '',
+          sgkSicilNo: '',
+          taxOffice: '',
+          taxNumber: '',
           city: '',
           district: '',
+          address: '',
+          phone: '',
+          email: '',
           status: 'active',
         },
   });
 
-  const cityValue = watch('city');
-  const districtOptions = MOCK_DISTRICTS[cityValue] ?? MOCK_DISTRICTS[''];
-
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Stack gap="md">
-        <TextInput
-          label={t('company.form.name')}
-          placeholder={t('company.form.name')}
-          {...register('name')}
-          error={errors.name?.message}
-          required
-        />
-        <TextInput
-          label={t('company.form.taxNo')}
-          placeholder={t('company.form.taxNo')}
-          {...register('taxNo')}
-          error={errors.taxNo?.message}
-          required
-        />
-        <TextInput
-          label={t('company.form.sgkNo')}
-          placeholder={t('company.form.sgkNo')}
-          {...register('sgkNo')}
-          error={errors.sgkNo?.message}
-          required
-        />
-        <Select
-          label={t('company.form.city')}
-          placeholder={t('company.form.city')}
-          data={MOCK_CITIES}
-          value={watch('city')}
-          onChange={(v) => {
-            setValue('city', v ?? '');
-            setValue('district', '');
-          }}
-          error={errors.city?.message}
-          required
-        />
-        <Select
-          label={t('company.form.district')}
-          placeholder={t('company.form.district')}
-          data={districtOptions}
-          value={watch('district')}
-          onChange={(v) => setValue('district', v ?? '')}
-          error={errors.district?.message}
-          required
-        />
-        <Textarea
-          label={t('company.form.address')}
-          placeholder={t('company.form.address')}
-          {...register('address')}
-          error={errors.address?.message}
-          required
-          minRows={2}
-        />
+      <Tabs defaultValue="general">
+        <Tabs.List mb="md">
+          <Tabs.Tab value="general">{t('company.tabs.general')}</Tabs.Tab>
+          <Tabs.Tab value="legal">{t('company.tabs.legal')}</Tabs.Tab>
+          <Tabs.Tab value="contact">{t('company.tabs.contact')}</Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="general">
+          <Stack gap="md">
+            <TextInput
+              label={t('company.form.firmaUnvani')}
+              placeholder={t('company.form.firmaUnvani')}
+              {...register('name')}
+              error={errors.name?.message}
+              required
+            />
+            <TextInput
+              label={t('company.form.naceCode')}
+              placeholder="örn: 41201"
+              {...register('naceCode')}
+              error={errors.naceCode?.message}
+            />
+            <Select
+              label={t('company.form.dangerClass')}
+              placeholder={t('company.form.dangerClass')}
+              data={DANGER_CLASS_OPTIONS}
+              value={watch('dangerClass') ?? null}
+              onChange={(v) => setValue('dangerClass', (v as CompanyFormValues['dangerClass']) ?? undefined)}
+              error={errors.dangerClass?.message}
+              clearable
+            />
+            <TextInput
+              label={t('company.form.sector')}
+              placeholder={t('company.form.sector')}
+              {...register('sector')}
+              error={errors.sector?.message}
+            />
+          </Stack>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="legal">
+          <Stack gap="md">
+            <TextInput
+              label={t('company.form.sgkSicilNo')}
+              placeholder={t('company.form.sgkSicilNo')}
+              {...register('sgkSicilNo')}
+              error={errors.sgkSicilNo?.message}
+              required
+            />
+            <TextInput
+              label={t('company.form.taxOffice')}
+              placeholder={t('company.form.taxOffice')}
+              {...register('taxOffice')}
+              error={errors.taxOffice?.message}
+            />
+            <TextInput
+              label={t('company.form.taxNumber')}
+              placeholder={t('company.form.taxNumber')}
+              {...register('taxNumber')}
+              error={errors.taxNumber?.message}
+            />
+          </Stack>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="contact">
+          <Stack gap="md">
+            <Select
+              label={t('company.form.city')}
+              placeholder={t('company.form.city')}
+              data={MOCK_CITIES}
+              value={watch('city') || null}
+              onChange={(v) => {
+                setValue('city', v ?? '');
+                setValue('district', '');
+              }}
+              error={errors.city?.message}
+              clearable
+            />
+            <TextInput
+              label={t('company.form.district')}
+              placeholder={t('company.form.district')}
+              {...register('district')}
+              error={errors.district?.message}
+            />
+            <Textarea
+              label={t('company.form.address')}
+              placeholder={t('company.form.address')}
+              {...register('address')}
+              error={errors.address?.message}
+              minRows={2}
+            />
+            <TextInput
+              label={t('company.form.phone')}
+              placeholder={t('company.form.phone')}
+              {...register('phone')}
+              error={errors.phone?.message}
+            />
+            <TextInput
+              label={t('company.form.email')}
+              placeholder={t('company.form.email')}
+              type="email"
+              {...register('email')}
+              error={errors.email?.message}
+            />
+          </Stack>
+        </Tabs.Panel>
+      </Tabs>
+
+      <Stack gap="md" mt="md" pt="md" style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}>
         <Select
           label={t('company.form.status')}
           data={[
@@ -189,9 +264,9 @@ function CompanyModalForm({ company, onSubmit, onCancel, t }: CompanyModalFormPr
           value={watch('status')}
           onChange={(v) => setValue('status', (v as CompanyStatus) ?? 'active')}
           error={errors.status?.message}
-          required
+          style={{ maxWidth: 200 }}
         />
-        <Group justify="flex-end" mt="md">
+        <Group justify="flex-end" gap="xs">
           <Button variant="default" type="button" onClick={onCancel}>
             {t('company.back')}
           </Button>
@@ -271,29 +346,44 @@ export function CompanyListPage() {
       {
         'Firma Adı': 'Örnek Firma A',
         'SGK Sicil No': 'SGK-12345',
+        'Vergi Dairesi': 'Kadıköy',
         'Vergi No': '1234567890',
-        'İl': 'Istanbul',
+        'Nace Kodu': '41201',
+        'Sektör': 'İnşaat',
+        'İl': 'İstanbul',
         'İlçe': 'Kadıköy',
         'Adres': 'Örnek Mahalle, Örnek Sokak No:1',
         'Tehlike Sınıfı': 'Tehlikeli',
+        'Telefon': '+90 216 123 45 67',
+        'E-Posta': 'info@ornekfirma.com',
       },
       {
         'Firma Adı': 'Örnek Firma B',
         'SGK Sicil No': 'SGK-67890',
+        'Vergi Dairesi': 'Çankaya',
         'Vergi No': '0987654321',
+        'Nace Kodu': '35110',
+        'Sektör': 'Enerji',
         'İl': 'Ankara',
         'İlçe': 'Çankaya',
         'Adres': 'Örnek Mahalle, Örnek Cadde No:5',
         'Tehlike Sınıfı': 'Çok Tehlikeli',
+        'Telefon': '',
+        'E-Posta': '',
       },
       {
         'Firma Adı': 'Örnek Firma C',
         'SGK Sicil No': 'SGK-11111',
+        'Vergi Dairesi': 'Konak',
         'Vergi No': '1122334455',
-        'İl': 'Izmir',
+        'Nace Kodu': '56101',
+        'Sektör': 'Hizmet',
+        'İl': 'İzmir',
         'İlçe': 'Konak',
         'Adres': 'Örnek Mahalle, Örnek Bulvar No:10',
         'Tehlike Sınıfı': 'Az Tehlikeli',
+        'Telefon': '',
+        'E-Posta': '',
       },
     ];
 
@@ -301,15 +391,19 @@ export function CompanyListPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Firmalar');
 
-    // Set column widths
     worksheet['!cols'] = [
-      { wch: 25 }, // Firma Adı
-      { wch: 15 }, // SGK Sicil No
-      { wch: 15 }, // Vergi No
-      { wch: 12 }, // İl
-      { wch: 12 }, // İlçe
-      { wch: 40 }, // Adres
-      { wch: 18 }, // Tehlike Sınıfı
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 18 },
+      { wch: 15 },
+      { wch: 10 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 40 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 28 },
     ];
 
     XLSX.writeFile(workbook, 'firma_sablonu.xlsx');
@@ -341,28 +435,38 @@ export function CompanyListPage() {
 
         jsonData.forEach((row: any) => {
           const firmaAdi = row['Firma Adı']?.toString().trim();
-          const sgkNo = row['SGK Sicil No']?.toString().trim();
+          const sgkSicilNo = row['SGK Sicil No']?.toString().trim();
           const vergiNo = row['Vergi No']?.toString().trim() || '';
+          const vergiDairesi = row['Vergi Dairesi']?.toString().trim() || '';
+          const naceKodu = row['Nace Kodu']?.toString().trim() || '';
+          const sektor = row['Sektör']?.toString().trim() || '';
           const il = row['İl']?.toString().trim() || '';
           const ilce = row['İlçe']?.toString().trim() || '';
           const adres = row['Adres']?.toString().trim() || '';
           const tehlikeSinifi = row['Tehlike Sınıfı']?.toString().trim() || '';
+          const telefon = row['Telefon']?.toString().trim() || '';
+          const eposta = row['E-Posta']?.toString().trim() || '';
 
-          // Validation: Firma Adı and SGK Sicil No are required
-          if (!firmaAdi || !sgkNo) {
+          // Validation: Firma Unvanı and SGK Sicil No are required
+          if (!firmaAdi || !sgkSicilNo) {
             skippedCount++;
             return;
           }
 
           validCompanies.push({
             name: firmaAdi,
-            sgkNo: sgkNo,
-            taxNo: vergiNo,
+            naceCode: naceKodu,
+            dangerClass: normalizeDangerClass(tehlikeSinifi),
+            sector: sektor,
+            sgkSicilNo,
+            taxOffice: vergiDairesi,
+            taxNumber: vergiNo,
             city: normalizeCity(il),
-            district: ilce.toLowerCase(),
+            district: ilce,
             address: adres,
+            phone: telefon,
+            email: eposta,
             status: 'active',
-            hazardClass: normalizeHazardClass(tehlikeSinifi),
           });
         });
 
@@ -533,11 +637,11 @@ export function CompanyListPage() {
               {filteredCompanies.map((c) => (
                 <Table.Tr key={c.id}>
                   <Table.Td>{c.name}</Table.Td>
-                  <Table.Td>{c.sgkNo}</Table.Td>
+                  <Table.Td>{c.sgkSicilNo}</Table.Td>
                   <Table.Td>
-                    {c.hazardClass ? (
-                      <Badge color={getHazardClassColor(c.hazardClass)} size="sm">
-                        {c.hazardClass}
+                    {c.dangerClass ? (
+                      <Badge color={getDangerClassColor(c.dangerClass)} size="sm">
+                        {c.dangerClass}
                       </Badge>
                     ) : (
                       <Text c="dimmed" size="sm">—</Text>

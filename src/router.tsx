@@ -18,6 +18,9 @@ import { RepresentativePage } from '@domains/company/pages/RepresentativePage';
 import { MailGroupsPage } from '@domains/company/pages/MailGroupsPage';
 import { SafetyLayout } from '@domains/safety/layout/SafetyLayout';
 import { HealthLayout } from '@domains/health/layout/HealthLayout';
+import { HealthPage } from '@domains/health/pages/HealthPage';
+import { IncidentPage } from '@domains/incident/pages/IncidentPage';
+import { PpePage } from '@domains/ppe/pages/PpePage';
 import { ArchiveLayout } from '@domains/archive/layout/ArchiveLayout';
 import { ExtraLayout } from '@domains/extra/layout/ExtraLayout';
 import { CrmLayout } from '@domains/crm/layout/CrmLayout';
@@ -40,6 +43,8 @@ export const router = createBrowserRouter([
           { path: 'personnel', element: <Navigate to="/company/employees" replace /> },
           { path: 'personnel/new', element: <Navigate to="/company/employees" replace /> },
           { path: 'training', element: <EducationPage /> },
+          { path: 'incidents', element: <IncidentPage /> },
+          { path: 'ppe', element: <PpePage /> },
           { path: 'worker', element: <Navigate to="/company/employees" replace /> },
           { path: 'worker/new', element: <Navigate to="/company/employees" replace /> },
           { path: 'worker/:id/edit', element: <Navigate to="/company/employees" replace /> },
@@ -72,10 +77,10 @@ export const router = createBrowserRouter([
               { path: 'plans/annual-work', element: <PlaceholderPage titleKey="nav.safetyPlansAnnualWork" /> },
               { path: 'plans/annual-training', element: <PlaceholderPage titleKey="nav.safetyPlansAnnualTraining" /> },
               { path: 'ppe/equipment-list', element: <PlaceholderPage titleKey="nav.safetyPpeEquipmentList" /> },
-              { path: 'ppe/custody-records', element: <PlaceholderPage titleKey="nav.safetyPpeCustodyRecords" /> },
+              { path: 'ppe/custody-records', element: <PpePage /> },
               { path: 'ppe/requests', element: <PlaceholderPage titleKey="nav.safetyPpeRequests" /> },
-              { path: 'incident/near-miss', element: <PlaceholderPage titleKey="nav.safetyIncidentNearMiss" /> },
-              { path: 'incident/accident-records', element: <PlaceholderPage titleKey="nav.safetyIncidentAccidentRecords" /> },
+              { path: 'incident/near-miss', element: <IncidentPage /> },
+              { path: 'incident/accident-records', element: <IncidentPage /> },
               { path: 'audit/dof-list', element: <PlaceholderPage titleKey="nav.safetyAuditDofList" /> },
               { path: 'audit/site-audit', element: <PlaceholderPage titleKey="nav.safetyAuditSiteAudit" /> },
               { path: 'audit/nonconformities', element: <PlaceholderPage titleKey="nav.safetyAuditNonconformities" /> },
@@ -99,7 +104,7 @@ export const router = createBrowserRouter([
               { path: 'prescription/query', element: <PlaceholderPage titleKey="nav.healthPrescriptionQuery" /> },
               { path: 'prescription/medication-list', element: <PlaceholderPage titleKey="nav.healthPrescriptionMedicationList" /> },
               { path: 'examination/polyclinic', element: <PlaceholderPage titleKey="nav.healthExaminationPolyclinic" /> },
-              { path: 'examination/entry-periodic', element: <PlaceholderPage titleKey="nav.healthExaminationEntryPeriodic" /> },
+              { path: 'examination/entry-periodic', element: <HealthPage /> },
               { path: 'examination/vaccination', element: <PlaceholderPage titleKey="nav.healthExaminationVaccination" /> },
               { path: 'examination/appointments', element: <PlaceholderPage titleKey="nav.healthExaminationAppointments" /> },
               { path: 'other/tests', element: <PlaceholderPage titleKey="nav.healthOtherTests" /> },

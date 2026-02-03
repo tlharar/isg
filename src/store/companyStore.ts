@@ -3,20 +3,32 @@ import { persist } from 'zustand/middleware';
 import type { CompanyFormValues } from '@domains/company/schemas/companySchema';
 
 export type CompanyStatus = 'active' | 'passive';
-export type HazardClass = 'Çok Tehlikeli' | 'Tehlikeli' | 'Az Tehlikeli';
+
+/** Tehlike Sınıfı (OHS hazard class) */
+export type DangerClass = 'Az Tehlikeli' | 'Tehlikeli' | 'Çok Tehlikeli';
 
 export interface Company {
   id: string;
+  /** Firma Unvanı */
   name: string;
-  taxNo: string;
-  address: string;
-  /** SGK Registration No (SGK Sicil No) */
-  sgkNo: string;
+  /** 6-digit sector code (NACE) */
+  naceCode: string;
+  /** Tehlike Sınıfı */
+  dangerClass?: DangerClass;
+  sector: string;
+  /** SGK Sicil No - critical for OHS */
+  sgkSicilNo: string;
+  /** Vergi Dairesi */
+  taxOffice: string;
+  /** Vergi No */
+  taxNumber: string;
   city: string;
+  /** İlçe */
   district: string;
+  address: string;
+  phone: string;
+  email: string;
   status: CompanyStatus;
-  /** Hazard Class (Tehlike Sınıfı) */
-  hazardClass?: HazardClass;
   /** Active employee count from system */
   employeeCountSystem: number;
   /** Active employee count from ISG Katip */
@@ -33,39 +45,54 @@ const INITIAL_COMPANIES: Company[] = [
   {
     id: 'c1',
     name: 'Company A',
-    taxNo: '1234567890',
+    naceCode: '41201',
+    dangerClass: 'Tehlikeli',
+    sector: 'İnşaat',
+    sgkSicilNo: 'SGK-001',
+    taxOffice: 'Kadıköy',
+    taxNumber: '1234567890',
+    city: 'İstanbul',
+    district: 'Kadıköy',
     address: 'Address A, Istanbul',
-    sgkNo: 'SGK-001',
-    city: 'istanbul',
-    district: 'kadikoy',
+    phone: '+90 216 123 45 67',
+    email: 'info@companya.com',
     status: 'active',
-    hazardClass: 'Tehlikeli',
     employeeCountSystem: 45,
     employeeCountIsgKatip: 42,
   },
   {
     id: 'c2',
     name: 'Company B',
-    taxNo: '0987654321',
+    naceCode: '35110',
+    dangerClass: 'Çok Tehlikeli',
+    sector: 'Enerji',
+    sgkSicilNo: 'SGK-002',
+    taxOffice: 'Çankaya',
+    taxNumber: '0987654321',
+    city: 'Ankara',
+    district: 'Çankaya',
     address: 'Address B, Ankara',
-    sgkNo: 'SGK-002',
-    city: 'ankara',
-    district: 'cankaya',
+    phone: '+90 312 456 78 90',
+    email: 'info@companyb.com',
     status: 'active',
-    hazardClass: 'Çok Tehlikeli',
     employeeCountSystem: 120,
     employeeCountIsgKatip: 118,
   },
   {
     id: 'c3',
     name: 'Company C',
-    taxNo: '1122334455',
+    naceCode: '56101',
+    dangerClass: 'Az Tehlikeli',
+    sector: 'Hizmet',
+    sgkSicilNo: 'SGK-003',
+    taxOffice: 'Konak',
+    taxNumber: '1122334455',
+    city: 'İzmir',
+    district: 'Konak',
     address: 'Address C, Izmir',
-    sgkNo: 'SGK-003',
-    city: 'izmir',
-    district: 'konak',
+    phone: '',
+    email: '',
     status: 'passive',
-    hazardClass: 'Az Tehlikeli',
     employeeCountSystem: 0,
     employeeCountIsgKatip: 0,
   },
