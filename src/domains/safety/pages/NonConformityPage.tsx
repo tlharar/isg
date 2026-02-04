@@ -7,6 +7,7 @@ import {
   Stack,
   Card,
   SimpleGrid,
+  Input,
   SegmentedControl,
   Modal,
   Textarea,
@@ -121,11 +122,6 @@ export function NonConformityPage() {
     });
     closeCloseModal();
     setSelectedId(null);
-  };
-
-  const handleOpenDofModal = (id: string) => {
-    setSelectedId(id);
-    openDofModal();
   };
 
   /** DÖF Başlat: mark issue as ConvertedToDOF and optionally navigate to DÖF. No hooks inside. */
@@ -308,16 +304,17 @@ export function NonConformityPage() {
       {/* Manuel Ekle modal */}
       <Modal opened={addModalOpened} onClose={closeAddModal} title="Manuel uygunsuzluk ekle" size="md">
         <Stack gap="md">
-          <SegmentedControl
-            label="Kaynak"
-            value={addForm.source}
-            onChange={(v) => setAddForm((f) => ({ ...f, source: v ?? f.source }))}
-            data={[
-              { value: 'Çalışan Bildirimi', label: 'Çalışan Bildirimi' },
-              { value: 'Saha Gözlemi', label: 'Saha Gözlemi' },
-              { value: 'Şikayet', label: 'Şikayet' },
-            ]}
-          />
+          <Input.Wrapper label="Kaynak">
+            <SegmentedControl
+              value={addForm.source}
+              onChange={(v) => setAddForm((f) => ({ ...f, source: v ?? f.source }))}
+              data={[
+                { value: 'Çalışan Bildirimi', label: 'Çalışan Bildirimi' },
+                { value: 'Saha Gözlemi', label: 'Saha Gözlemi' },
+                { value: 'Şikayet', label: 'Şikayet' },
+              ]}
+            />
+          </Input.Wrapper>
           <Textarea
             label="Açıklama"
             placeholder="Uygunsuzluk detayı..."
@@ -333,16 +330,17 @@ export function NonConformityPage() {
             onChange={(e) => setAddForm((f) => ({ ...f, location: e.currentTarget.value }))}
             required
           />
-          <SegmentedControl
-            label="Risk seviyesi"
-            value={addForm.riskLevel}
-            onChange={(v) => setAddForm((f) => ({ ...f, riskLevel: (v as NonConformityRiskLevel) ?? f.riskLevel }))}
-            data={[
-              { value: 'Critical', label: 'Kritik' },
-              { value: 'Major', label: 'Major' },
-              { value: 'Minor', label: 'Minor' },
-            ]}
-          />
+          <Input.Wrapper label="Risk seviyesi">
+            <SegmentedControl
+              value={addForm.riskLevel}
+              onChange={(v) => setAddForm((f) => ({ ...f, riskLevel: (v as NonConformityRiskLevel) ?? f.riskLevel }))}
+              data={[
+                { value: 'Critical', label: 'Kritik' },
+                { value: 'Major', label: 'Major' },
+                { value: 'Minor', label: 'Minor' },
+              ]}
+            />
+          </Input.Wrapper>
           <Group justify="flex-end" mt="md">
             <Button variant="default" onClick={closeAddModal}>İptal</Button>
             <Button onClick={handleManualAdd}>Ekle</Button>

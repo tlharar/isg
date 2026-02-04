@@ -22,7 +22,6 @@ import { notifications } from '@mantine/notifications';
 import {
   useWorkEquipmentStore,
   getControlStatus,
-  type Equipment,
   type EquipmentType,
   type ControlResult,
 } from '@store/workEquipmentStore';

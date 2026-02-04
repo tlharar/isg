@@ -133,7 +133,6 @@ export function getControlStatus(equipment: Equipment): 'overdue' | 'upcoming' |
   if (!next) return 'safe';
   const todayStr = today();
   if (next < todayStr) return 'overdue';
-  const in30 = addMonths(todayStr, 0);
   const d = new Date(next + 'T12:00:00');
   const d30 = new Date();
   d30.setDate(d30.getDate() + 30);
@@ -203,7 +202,6 @@ export const useWorkEquipmentStore = create<WorkEquipmentState>()(
           .sort((a, b) => (b.date > a.date ? 1 : -1)),
 
       getUpcomingControls: () => {
-        const todayStr = today();
         const d30 = new Date();
         d30.setDate(d30.getDate() + 30);
         const limitStr = d30.toISOString().slice(0, 10);

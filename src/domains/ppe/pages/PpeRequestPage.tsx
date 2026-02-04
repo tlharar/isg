@@ -7,6 +7,7 @@ import {
   Stack,
   Paper,
   Table,
+  Input,
   SegmentedControl,
   Badge,
   ActionIcon,
@@ -284,15 +285,16 @@ export function PpeRequestPage() {
             value={form.quantity}
             onChange={(v) => setForm((f) => ({ ...f, quantity: typeof v === 'number' ? v : 1 }))}
           />
-          <SegmentedControl
-            label="Aciliyet"
-            value={form.urgency}
-            onChange={(v) => setForm((f) => ({ ...f, urgency: v as 'Normal' | 'High' }))}
-            data={[
-              { value: 'Normal', label: 'Normal' },
-              { value: 'High', label: 'Acil' },
-            ]}
-          />
+          <Input.Wrapper label="Aciliyet">
+            <SegmentedControl
+              value={form.urgency}
+              onChange={(v) => setForm((f) => ({ ...f, urgency: v as 'Normal' | 'High' }))}
+              data={[
+                { value: 'Normal', label: 'Normal' },
+                { value: 'High', label: 'Acil' },
+              ]}
+            />
+          </Input.Wrapper>
           <Textarea
             label="Açıklama / Gerekçe"
             placeholder="Örn: Eskisi yırtıldı"

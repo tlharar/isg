@@ -84,7 +84,7 @@ export const useDofStore = create<DofState>()(
       getDofById: (id) => get().records.find((r) => r.id === id),
 
       loadData: (isDemo) => {
-        set({ records: [] });
+        if (!isDemo) set({ records: [] });
       },
     }),
     { name: 'ohs-dof', partialize: (s) => ({ records: s.records }) }

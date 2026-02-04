@@ -62,7 +62,6 @@ function formatDate(iso: string | null): string {
 
 function NextControlCell({ equipment }: { equipment: Equipment }) {
   const status = getControlStatus(equipment);
-  const color = status === 'overdue' ? 'red' : status === 'upcoming' ? 'yellow' : 'green';
   return (
     <MantineText size="sm" fw={status !== 'safe' ? 600 : undefined} c={status === 'overdue' ? 'red' : status === 'upcoming' ? 'yellow.7' : 'green.7'}>
       {formatDate(equipment.nextControlDate)}
@@ -172,8 +171,6 @@ export function WorkEquipmentListPage() {
     setHistoryEquipmentId(eq.id);
     openHistory();
   };
-
-  const activeEquipment = useMemo(() => equipment.filter((e) => e.status === 'Active'), [equipment]);
 
   return (
     <>

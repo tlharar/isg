@@ -59,7 +59,6 @@ export function EmergencyTeamsPage() {
 
   const openAddModal = (teamType: EmergencyTeamType) => {
     setSelectedTeamType(teamType);
-    const team = teams.find((t) => t.type === teamType);
     setSelectedEmployeeIds([]);
     openModal();
   };

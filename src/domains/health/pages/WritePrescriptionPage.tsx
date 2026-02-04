@@ -93,7 +93,12 @@ export function WritePrescriptionPage() {
     }
     if (!selectedWorker) return null;
     const company = selectedWorker.companyId ? getCompanyById(selectedWorker.companyId) : null;
-    const age = computeAge(selectedWorker.dateOfBirth);
+    const dobStr = selectedWorker.dateOfBirth == null
+      ? undefined
+      : typeof selectedWorker.dateOfBirth === 'string'
+        ? selectedWorker.dateOfBirth
+        : (selectedWorker.dateOfBirth as Date).toISOString().slice(0, 10);
+    const age = computeAge(dobStr);
     return {
       name: selectedWorker.nameSurname,
       age: age ?? '—',

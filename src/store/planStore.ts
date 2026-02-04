@@ -93,10 +93,6 @@ function generateId(): string {
   return `plan-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function generateItemId(): string {
-  return `item-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
 /** Normalize URL planType to PlanType */
 export function normalizePlanType(planType: string | undefined): PlanType {
   const t = (planType || '').toUpperCase();
@@ -192,7 +188,7 @@ export const usePlanStore = create<PlanState>()(
       },
 
       loadData: (isDemo) => {
-        set({ plans: [] });
+        if (!isDemo) set({ plans: [] });
       },
     }),
     { name: 'ohs-plans', partialize: (s) => ({ plans: s.plans }) }

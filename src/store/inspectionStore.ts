@@ -169,7 +169,7 @@ export const useInspectionStore = create<InspectionState>()(
       getTemplateByKey: (key) => INSPECTION_TEMPLATES.find((t) => t.key === key),
 
       loadData: (isDemo) => {
-        set({ inspections: [] });
+        if (!isDemo) set({ inspections: [] });
       },
     }),
     { name: 'ohs-inspections', partialize: (s) => ({ inspections: s.inspections }) }

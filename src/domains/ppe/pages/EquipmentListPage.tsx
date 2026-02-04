@@ -28,7 +28,6 @@ export function EquipmentListPage() {
   const updateEquipment = useEquipmentStore((s) => s.updateEquipment);
   const deleteEquipment = useEquipmentStore((s) => s.deleteEquipment);
   const addFromTemplate = useEquipmentStore((s) => s.addFromTemplate);
-  const getCompanyById = useCompanyStore((s) => s.getCompanyById);
 
   const [templateOpened, { open: openTemplate, close: closeTemplate }] = useDisclosure(false);
   const [formOpened, { open: openForm, close: closeForm }] = useDisclosure(false);

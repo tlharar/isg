@@ -11,7 +11,6 @@ import {
   Menu,
   Button,
   Avatar,
-  Divider,
   Box,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';

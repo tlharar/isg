@@ -105,7 +105,6 @@ export function DofPage() {
     return list.map((w) => ({ value: w.nameSurname, label: w.nameSurname }));
   }, [workers, selectedCompanyId]);
 
-  const editing = editingId ? getDofById(editingId) ?? null : null;
   const closingRecord = closingId ? getDofById(closingId) ?? null : null;
 
   const { handleSubmit: handleCreateSubmit, setValue: setCreateValue, watch: watchCreate, control: controlCreate, reset: resetCreate } = useForm<CreateForm>({
@@ -119,7 +118,7 @@ export function DofPage() {
     },
   });
 
-  const { handleSubmit: handleCloseSubmit, setValue: setCloseValue, watch: watchClose, control: controlClose, reset: resetClose } = useForm<{
+  const { handleSubmit: handleCloseSubmit, control: controlClose, reset: resetClose } = useForm<{
     resultDescription: string;
     closingDate: Date | null;
   }>({

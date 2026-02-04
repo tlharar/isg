@@ -93,7 +93,7 @@ export const useRiskStore = create<RiskState>()(
       },
 
       loadData: (isDemo) => {
-        set({ risks: [] });
+        if (!isDemo) set({ risks: [] });
       },
     }),
     {

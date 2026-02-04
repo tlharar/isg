@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import {
   Title,
   Text as MantineText,
@@ -136,7 +136,7 @@ export function InspectionConductPage() {
             onStatusChange={handleStatusChange}
             onNoteChange={handleNoteChange}
             onPhotoUpload={handlePhotoUpload}
-            fileResetRef={(fn) => { fileResetRefs.current[item.id] = fn; }}
+            fileResetRef={(fn) => { if (fn != null) fileResetRefs.current[item.id] = fn; }}
           />
         ))}
       </Stack>
@@ -163,7 +163,7 @@ interface QuestionCardProps {
   onStatusChange: (itemId: string, status: InspectionItemStatus) => void;
   onNoteChange: (itemId: string, note: string) => void;
   onPhotoUpload: (itemId: string, file: File | null) => void;
-  fileResetRef: (fn: () => void) => void;
+  fileResetRef: (fn: (() => void) | null) => void;
 }
 
 function QuestionCard({

@@ -32,7 +32,6 @@ import {
   useDrillStore,
   type Drill,
   type DrillType,
-  type DrillReportData,
 } from '@store/drillStore';
 
 const DRILL_TYPE_OPTIONS: { value: DrillType; label: string }[] = [
@@ -79,7 +78,6 @@ export function DrillPage() {
   const drills = useDrillStore((s) => s.drills);
   const scheduleDrill = useDrillStore((s) => s.scheduleDrill);
   const completeDrill = useDrillStore((s) => s.completeDrill);
-  const deleteDrill = useDrillStore((s) => s.deleteDrill);
   const getDrillById = useDrillStore((s) => s.getDrillById);
 
   const [planModalOpened, { open: openPlanModal, close: closePlanModal }] = useDisclosure(false);
@@ -171,13 +169,14 @@ export function DrillPage() {
     });
   };
 
-  const handlePhotoUpload = (file: File | null) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setReportPhotos((prev) => [...prev, reader.result as string]);
-    };
-    reader.readAsDataURL(file);
+  const handlePhotoUpload = (payload: File[]) => {
+    payload.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setReportPhotos((prev) => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   return (

@@ -222,7 +222,7 @@ export function ChecklistPage() {
           />
 
           <Box>
-            <MantineText size="sm" fw={500} mb="xs" required>
+            <MantineText size="sm" fw={500} mb="xs">
               Sorular
             </MantineText>
             <Stack gap="xs">

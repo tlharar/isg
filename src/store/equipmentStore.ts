@@ -113,7 +113,7 @@ export const useEquipmentStore = create<EquipmentState>()(
       },
 
       loadData: (isDemo) => {
-        set({ items: [] });
+        if (!isDemo) set({ items: [] });
       },
     }),
     { name: 'ohs-equipment', partialize: (s) => ({ items: s.items }) }
