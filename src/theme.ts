@@ -1,6 +1,6 @@
-import { MantineColorsTuple, createTheme } from '@mantine/core';
+import { MantineColorsTuple, createTheme, rem } from '@mantine/core';
 
-/** Vibrant Turquoise/Cyan brand color - #00C2CB as main (index 6) */
+/** Vibrant Turquoise/Cyan brand color - #00C2CB as main (index 6), readable on light and dark */
 const turquoise: MantineColorsTuple = [
   '#e6fffe',
   '#b3f7f6',
@@ -16,27 +16,101 @@ const turquoise: MantineColorsTuple = [
 
 export const theme = createTheme({
   primaryColor: 'cyan',
+  primaryShade: { light: 6, dark: 5 },
   colors: {
     cyan: turquoise,
   },
-  fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+  fontFamily: "'Inter', system-ui, sans-serif",
   headings: {
-    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
-    fontWeight: '700',
+    fontFamily: "'Inter', system-ui, sans-serif",
+    fontWeight: '600',
   },
   defaultRadius: 'md',
+  radius: {
+    xs: rem(4),
+    sm: rem(6),
+    md: rem(8),
+    lg: rem(12),
+    xl: rem(16),
+  },
   components: {
+    Button: {
+      defaultProps: {
+        radius: 'md',
+        size: 'md',
+      },
+      vars: () => ({
+        root: {
+          '--button-height': rem(42),
+        },
+      }),
+    },
     Paper: {
       defaultProps: {
         withBorder: true,
-        shadow: 'sm',
+        shadow: 'xs',
         radius: 'md',
       },
     },
     Card: {
       defaultProps: {
         withBorder: true,
-        shadow: 'sm',
+        shadow: 'xs',
+        radius: 'md',
+      },
+    },
+    Table: {
+      defaultProps: {
+        withTableBorder: true,
+        withColumnBorders: true,
+        striped: true,
+      },
+    },
+    TextInput: {
+      defaultProps: {
+        variant: 'filled',
+        radius: 'md',
+      },
+    },
+    Select: {
+      defaultProps: {
+        variant: 'filled',
+        radius: 'md',
+      },
+    },
+    NumberInput: {
+      defaultProps: {
+        variant: 'filled',
+        radius: 'md',
+      },
+    },
+    Textarea: {
+      defaultProps: {
+        variant: 'filled',
+        radius: 'md',
+      },
+    },
+    PasswordInput: {
+      defaultProps: {
+        variant: 'filled',
+        radius: 'md',
+      },
+    },
+    NativeSelect: {
+      defaultProps: {
+        variant: 'filled',
+        radius: 'md',
+      },
+    },
+    MultiSelect: {
+      defaultProps: {
+        variant: 'filled',
+        radius: 'md',
+      },
+    },
+    Autocomplete: {
+      defaultProps: {
+        variant: 'filled',
         radius: 'md',
       },
     },

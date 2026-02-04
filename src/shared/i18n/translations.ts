@@ -1493,7 +1493,7 @@ export const translations = {
     mailGroups: {
       title: 'Mail Grupları',
       subtitle: 'İSG bildirimleri için dağıtım listeleri',
-      buttonAdd: '+ Yeni Grup Ekle',
+      buttonAdd: 'Yeni Grup Ekle',
       buttonAddFirst: 'İlk Grubu Ekle',
       noCompanySelected: 'Mail gruplarını yönetmek için lütfen üstten bir firma seçin.',
       emptyState: 'Henüz mail grubu oluşturulmadı. Bildirimler için lütfen grup ekleyin.',

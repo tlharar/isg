@@ -21,6 +21,7 @@ const queryClient = new QueryClient({
 });
 
 const cssVariablesResolver: CSSVariablesResolver = () => ({
+  variables: {},
   light: {
     '--app-background': '#f8f9fa',
     '--sidebar-background': '#ffffff',
