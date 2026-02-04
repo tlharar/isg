@@ -10,7 +10,7 @@ const IDLE_LOGOUT_MS = 15 * 60 * 1000; // 15 minutes
 /**
  * App layout: header + navbar (sidebar). On mobile, the navbar is collapsed by default
  * and only shown when the hamburger menu is opened. Clicking a nav link closes the menu.
- * Background: light gray (#f8f9fa) for depth; sidebar white with border.
+ * Backgrounds use --app-background and --sidebar-background (set by cssVariablesResolver in main.tsx) so light/dark mode both work.
  * Idle session timeout: logs out and redirects to /login after 15 minutes of inactivity.
  */
 export function ShellLayout() {
@@ -29,13 +29,13 @@ export function ShellLayout() {
       padding={{ base: 'sm', sm: 'md' }}
       styles={{
         root: {
-          backgroundColor: 'var(--mantine-color-gray-0)',
+          backgroundColor: 'var(--app-background)',
         },
         main: {
-          backgroundColor: '#f8f9fa',
+          backgroundColor: 'var(--app-background)',
         },
         navbar: {
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--sidebar-background)',
           borderRight: '1px solid var(--mantine-color-default-border)',
         },
       }}

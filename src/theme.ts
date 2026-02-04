@@ -28,14 +28,17 @@ export const theme = createTheme({
   components: {
     Paper: {
       defaultProps: {
+        withBorder: true,
         shadow: 'sm',
         radius: 'md',
-        withBorder: false,
       },
     },
-  },
-  other: {
-    appBackground: '#f8f9fa',
-    sidebarBackground: '#ffffff',
+    Card: {
+      defaultProps: {
+        withBorder: true,
+        shadow: 'sm',
+        radius: 'md',
+      },
+    },
   },
 });

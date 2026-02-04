@@ -23,7 +23,7 @@ export function AccountSettingsModal({ opened, onClose }: AccountSettingsModalPr
   const roleLabel = currentUser ? ROLE_LABELS[currentUser.role] ?? currentUser.role : '—';
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Hesap Ayarları" size="sm" centered>
+    <Modal opened={opened} onClose={onClose} title="Hesap Bilgileri" size="sm" centered>
       <Stack gap="sm">
         <TextInput
           label="Ad"

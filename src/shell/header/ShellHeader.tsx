@@ -161,17 +161,16 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
                   variant="subtle"
                   size="sm"
                   leftSection={<Avatar radius="xl" size="sm" color="cyan">{initials}</Avatar>}
-                  visibleFrom="xs"
                   style={{ maxWidth: 200 }}
                 >
-                  <Box style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <Box visibleFrom="xs" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {displayName || 'Kullanıcı'}
                   </Box>
                 </Button>
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Item leftSection={<IconUser size={14} />} onClick={openAccountModal}>
-                  Hesap Ayarları
+                  Hesap Bilgileri
                 </Menu.Item>
                 <Menu.Item leftSection={<IconKey size={14} />} onClick={openPasswordModal}>
                   Şifre Değiştir

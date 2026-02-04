@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MantineProvider } from '@mantine/core';
+import { MantineProvider, CSSVariablesResolver } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { theme } from './theme';
 import { Notifications } from '@mantine/notifications';
@@ -20,10 +20,21 @@ const queryClient = new QueryClient({
   },
 });
 
+const cssVariablesResolver: CSSVariablesResolver = () => ({
+  light: {
+    '--app-background': '#f8f9fa',
+    '--sidebar-background': '#ffffff',
+  },
+  dark: {
+    '--app-background': 'var(--mantine-color-dark-8)',
+    '--sidebar-background': 'var(--mantine-color-dark-7)',
+  },
+});
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme} defaultColorScheme="light">
+      <MantineProvider theme={theme} defaultColorScheme="light" cssVariablesResolver={cssVariablesResolver}>
         <ModalsProvider>
           <Notifications position="top-right" />
           <RouterProvider router={router} />

@@ -101,15 +101,6 @@ function formatDisplayDate(dateStr: string): string {
     : d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function downloadImage(dataUrl: string | null, filename: string) {
-  if (!dataUrl) return;
-  const ext = dataUrl.startsWith('data:image/png') ? 'png' : 'jpg';
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = `${filename.replace(/\s+/g, '-')}.${ext}`;
-  link.click();
-}
-
 export function FloorPlanPage() {
   const imageDataUrl = useFloorPlanStore((s) => s.imageDataUrl);
   const markers = useFloorPlanStore((s) => s.markers);
@@ -286,7 +277,7 @@ export function FloorPlanPage() {
   const handleDownloadPlan = (plan: SavedPlan) => {
     notifications.show({
       title: 'Kayıtlı plan',
-      message: 'Önce planı yükleyin, ardından ana ekrandan indirin.',
+      message: `"${plan.name}" isimli planı indirmek için önce planı yükleyin, ardından ana ekrandan indirin.`,
       color: 'blue',
     });
   };

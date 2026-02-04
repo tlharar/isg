@@ -15,7 +15,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconPlus, IconUpload, IconSettings, IconTrash, IconCheck } from '@tabler/icons-react';
-import { usePlanStore, getTemplatesForType, PLAN_TYPE_LABELS, normalizePlanType, type PlanTemplate } from '@store/planStore';
+import { usePlanStore, PLAN_TYPE_LABELS, normalizePlanType, type PlanTemplate } from '@store/planStore';
 import { useCompanyStore } from '@store/companyStore';
 import { exportTableToExcel } from '@shared/utils';
 
@@ -47,10 +47,6 @@ export function PlanListPage() {
     return plans.filter((p) => (p.type ?? 'WORK') === planType).sort((a, b) => b.year - a.year);
   }, [plans, planType]);
 
-  const templateNames = useMemo(
-    () => getTemplatesForType(planType, planType === 'WORK' ? planTemplates : undefined),
-    [planType, planTemplates]
-  );
   const title = PLAN_TYPE_LABELS[planType];
 
   const [templatesOpened, { open: openTemplates, close: closeTemplates }] = useDisclosure(false);
