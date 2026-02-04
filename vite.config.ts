@@ -24,13 +24,21 @@ export default defineConfig({
   build: {
     target: 'es2020',
     sourcemap: true,
+    // EKLENDİ 1: Uyarı limitini 1.5MB'a çekiyoruz (Sarı uyarıyı kaldırır)
+    chunkSizeWarningLimit: 1500, 
     rollupOptions: {
       output: {
+        // GÜNCELLENDİ: Projedeki ağır kütüphaneleri ayrı dosyalara bölüyoruz
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          mantine: ['@mantine/core', '@mantine/hooks', '@mantine/dates'],
+          mantine: ['@mantine/core', '@mantine/hooks', '@mantine/dates', '@mantine/notifications'],
           query: ['@tanstack/react-query'],
           forms: ['react-hook-form', 'zod', '@hookform/resolvers'],
+          // Projeye özgü yeni eklemeler:
+          icons: ['@tabler/icons-react'], // En çok yer kaplayan paketlerden biri
+          charts: ['recharts'],           // Dashboard grafikleri için
+          state: ['zustand'],             // Store yönetimi için
+          utils: ['dayjs'],               // Tarih formatlama için
         },
       },
     },
