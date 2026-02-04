@@ -1,10 +1,32 @@
-import { useState } from 'react';
-import { Title, Text, Button, Table, Badge, Group, ActionIcon, Paper, Stack, Box } from '@mantine/core';
-import { IconPlus, IconEdit, IconTrash, IconFileText } from '@tabler/icons-react';
+import { useState, useMemo } from 'react';
+import {
+  Title,
+  Text,
+  Button,
+  Table,
+  Badge,
+  Group,
+  ActionIcon,
+  Paper,
+  Stack,
+  Box,
+  Tooltip,
+  Modal,
+  TextInput,
+} from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { IconPlus, IconEdit, IconTrash, IconFileText, IconSettings } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
-import { useEducationStore, type EducationSession, type EducationStatus } from '@store/educationStore';
+import {
+  useEducationStore,
+  type EducationSession,
+  type EducationStatus,
+  type PlanTemplate,
+} from '@store/educationStore';
+import { useWorkerStore } from '@store/workerStore';
+import { createCertificatePdf } from '@shared/utils';
 import { EducationModal, type EducationFormValues } from '../components/EducationModal';
 
 /**
@@ -23,15 +45,63 @@ function getStatusBadgeColor(status: EducationStatus): string {
   }
 }
 
+/**
+ * Resolve attendee IDs (or legacy names) to display names using workers.
+ */
+function getAttendeeDisplayNames(
+  attendeeIdsOrNames: string[],
+  workersById: Map<string, string>
+): string[] {
+  return attendeeIdsOrNames.map((idOrName) => workersById.get(idOrName) ?? idOrName);
+}
+
+/**
+ * Format attendees for table: "Name1, Name2, Name3" or "X Kişi" when more than 3.
+ */
+function formatAttendeesForTable(
+  attendeeIdsOrNames: string[],
+  workersById: Map<string, string>,
+  maxNames = 3
+): string {
+  const names = getAttendeeDisplayNames(attendeeIdsOrNames, workersById);
+  if (names.length === 0) return '—';
+  if (names.length <= maxNames) return names.join(', ');
+  return `${names.length} Kişi`;
+}
+
 export function EducationPage() {
   const { t } = useTranslation();
   const sessions = useEducationStore((s) => s.sessions);
+  const templates = useEducationStore((s) => s.templates);
   const addSession = useEducationStore((s) => s.addSession);
   const updateSession = useEducationStore((s) => s.updateSession);
   const deleteSession = useEducationStore((s) => s.deleteSession);
+  const addTemplate = useEducationStore((s) => s.addTemplate);
+  const deleteTemplate = useEducationStore((s) => s.deleteTemplate);
+
+  const workers = useWorkerStore((s) => s.workers);
+  const workersById = useMemo(
+    () => new Map(workers.map((w) => [w.id, w.nameSurname])),
+    [workers]
+  );
 
   const [modalOpened, setModalOpened] = useState(false);
   const [editingSession, setEditingSession] = useState<EducationSession | null>(null);
+  const [templatesOpened, { open: openTemplates, close: closeTemplates }] = useDisclosure(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+
+  const handleAddTemplate = () => {
+    const name = newTemplateName.trim();
+    if (!name) return;
+    addTemplate(name);
+    setNewTemplateName('');
+  };
+
+  const handleDeleteTemplate = (tmpl: PlanTemplate) => {
+    if (window.confirm(`"${tmpl.name}" şablonunu silmek istediğinize emin misiniz?`)) {
+      deleteTemplate(tmpl.id);
+    }
+  };
 
   const handleAddSession = () => {
     setEditingSession(null);
@@ -57,14 +127,53 @@ export function EducationPage() {
     });
   };
 
-  const handleGenerateCertificate = (session: EducationSession) => {
-    // Placeholder for certificate generation
+  const handleDownloadCertificate = (session: EducationSession) => {
+    if (session.attendees.length === 0) {
+      notifications.show({
+        title: t('education.certificateGenerating'),
+        message: t('education.noParticipants'),
+        color: 'yellow',
+      });
+      return;
+    }
+
     notifications.show({
       title: t('education.certificateGenerating'),
-      message: `${session.title} - ${session.attendees.length} ${t('education.participants')}`,
+      message: 'Sertifika hazırlanıyor...',
       color: 'blue',
+      autoClose: 2000,
     });
-    // In real app: Generate PDF certificate with attendee names, date, duration, etc.
+
+    const displayNames = getAttendeeDisplayNames(session.attendees, workersById);
+    const firstParticipantName = displayNames[0];
+
+    try {
+      createCertificatePdf(
+        firstParticipantName,
+        session.title,
+        session.date,
+        session.durationHours
+      );
+      if (session.attendees.length > 1) {
+        notifications.show({
+          title: t('education.certificateDownloaded'),
+          message: `${firstParticipantName} için sertifika indirildi. Diğer katılımcılar için tekrar tıklayıp ayrı ayrı indirebilirsiniz.`,
+          color: 'green',
+        });
+      } else {
+        notifications.show({
+          title: t('education.certificateDownloaded'),
+          message: 'Sertifika başarıyla indirildi.',
+          color: 'green',
+        });
+      }
+    } catch {
+      notifications.show({
+        title: 'Hata',
+        message: 'Sertifika oluşturulurken bir hata oluştu.',
+        color: 'red',
+      });
+    }
   };
 
   const handleSubmit = (values: EducationFormValues) => {
@@ -85,63 +194,75 @@ export function EducationPage() {
     }
   };
 
-  const rows = sessions.map((session) => (
-    <Table.Tr key={session.id}>
-      <Table.Td>{session.title}</Table.Td>
-      <Table.Td>
-        <Badge variant="light" color="cyan">
-          {session.type}
-        </Badge>
-      </Table.Td>
-      <Table.Td>
-        {new Date(session.date).toLocaleDateString('tr-TR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        })}
-      </Table.Td>
-      <Table.Td>{session.trainer}</Table.Td>
-      <Table.Td style={{ textAlign: 'center' }}>
-        <Badge size="lg" variant="filled" color="blue">
-          {session.attendees.length}
-        </Badge>
-      </Table.Td>
-      <Table.Td>
-        <Badge color={getStatusBadgeColor(session.status)}>
-          {session.status}
-        </Badge>
-      </Table.Td>
-      <Table.Td>
-        <Group gap="xs" wrap="nowrap">
-          <ActionIcon
-            variant="subtle"
-            color="blue"
-            onClick={() => handleEditSession(session)}
-            aria-label={t('common.edit')}
-          >
-            <IconEdit size={18} />
-          </ActionIcon>
-          <ActionIcon
-            variant="subtle"
-            color="green"
-            onClick={() => handleGenerateCertificate(session)}
-            aria-label={t('education.generateCertificate')}
-            disabled={session.status !== 'Tamamlandı'}
-          >
-            <IconFileText size={18} />
-          </ActionIcon>
-          <ActionIcon
-            variant="subtle"
-            color="red"
-            onClick={() => handleDeleteSession(session)}
-            aria-label={t('common.delete')}
-          >
-            <IconTrash size={18} />
-          </ActionIcon>
-        </Group>
-      </Table.Td>
-    </Table.Tr>
-  ));
+  const rows = sessions.map((session) => {
+    const attendeeLabel = formatAttendeesForTable(session.attendees, workersById);
+    const allNames = getAttendeeDisplayNames(session.attendees, workersById);
+    const hasMany = session.attendees.length > 3;
+
+    return (
+      <Table.Tr key={session.id}>
+        <Table.Td>{session.title}</Table.Td>
+        <Table.Td>
+          <Badge variant="light" color="cyan">
+            {session.type}
+          </Badge>
+        </Table.Td>
+        <Table.Td>
+          {new Date(session.date).toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })}
+        </Table.Td>
+        <Table.Td>{session.trainer}</Table.Td>
+        <Table.Td>
+          {hasMany ? (
+            <Tooltip label={allNames.join(', ')}>
+              <Badge size="lg" variant="light" color="blue">
+                {attendeeLabel}
+              </Badge>
+            </Tooltip>
+          ) : (
+            <Text size="sm">{attendeeLabel}</Text>
+          )}
+        </Table.Td>
+        <Table.Td>
+          <Badge color={getStatusBadgeColor(session.status)}>
+            {session.status}
+          </Badge>
+        </Table.Td>
+        <Table.Td>
+          <Group gap="xs" wrap="nowrap">
+            <ActionIcon
+              variant="subtle"
+              color="blue"
+              onClick={() => handleEditSession(session)}
+              aria-label={t('common.edit')}
+            >
+              <IconEdit size={18} />
+            </ActionIcon>
+            <ActionIcon
+              variant="subtle"
+              color="green"
+              onClick={() => handleDownloadCertificate(session)}
+              aria-label={t('education.generateCertificate')}
+              disabled={session.status !== 'Tamamlandı'}
+            >
+              <IconFileText size={18} />
+            </ActionIcon>
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              onClick={() => handleDeleteSession(session)}
+              aria-label={t('common.delete')}
+            >
+              <IconTrash size={18} />
+            </ActionIcon>
+          </Group>
+        </Table.Td>
+      </Table.Tr>
+    );
+  });
 
   return (
     <>
@@ -154,10 +275,72 @@ export function EducationPage() {
               {t('education.subtitle')}
             </Text>
           </Box>
-          <Button leftSection={<IconPlus size={18} />} onClick={handleAddSession}>
-            {t('education.addSession')}
-          </Button>
+          <Group gap="sm" wrap="wrap">
+            <Button
+              variant="light"
+              leftSection={<IconSettings size={18} />}
+              onClick={openTemplates}
+            >
+              Şablonları Düzenle
+            </Button>
+            <Button leftSection={<IconPlus size={18} />} onClick={handleAddSession}>
+              {t('education.addSession')}
+            </Button>
+          </Group>
         </Group>
+
+        <Modal opened={templatesOpened} onClose={closeTemplates} title="Şablon Yönetimi" size="md">
+          <Stack gap="md">
+            <Group align="flex-end" wrap="nowrap">
+              <TextInput
+                label="Şablon Adı"
+                placeholder="Yeni şablon adı"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.currentTarget.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddTemplate()}
+                style={{ flex: 1 }}
+              />
+              <Button onClick={handleAddTemplate} disabled={!newTemplateName.trim()}>
+                Ekle
+              </Button>
+            </Group>
+            <Text size="sm" fw={500}>
+              Mevcut şablonlar
+            </Text>
+            {templates.length === 0 ? (
+              <Text size="sm" c="dimmed">
+                Henüz şablon yok. Yukarıdan ekleyin.
+              </Text>
+            ) : (
+              <Table withTableBorder withColumnBorders>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Şablon Adı</Table.Th>
+                    <Table.Th style={{ width: 60 }}>İşlem</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {templates.map((tmpl) => (
+                    <Table.Tr key={tmpl.id}>
+                      <Table.Td>{tmpl.name}</Table.Td>
+                      <Table.Td>
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          size="sm"
+                          onClick={() => handleDeleteTemplate(tmpl)}
+                          aria-label="Sil"
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            )}
+          </Stack>
+        </Modal>
 
         {/* Education Table */}
         <Paper withBorder>
@@ -184,7 +367,7 @@ export function EducationPage() {
                     <Table.Th>{t('education.table.type')}</Table.Th>
                     <Table.Th>{t('education.table.date')}</Table.Th>
                     <Table.Th>{t('education.table.trainer')}</Table.Th>
-                    <Table.Th style={{ textAlign: 'center' }}>{t('education.table.attendees')}</Table.Th>
+                    <Table.Th>{t('education.table.attendees')}</Table.Th>
                     <Table.Th>{t('education.table.status')}</Table.Th>
                     <Table.Th>{t('education.table.actions')}</Table.Th>
                   </Table.Tr>

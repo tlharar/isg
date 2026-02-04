@@ -10,18 +10,27 @@ export interface Equipment {
   currentStock: number;
 }
 
-/** Common PPE items for template quick-add */
-export const PPE_TEMPLATES: string[] = [
-  'Baret (EN 397)',
-  'Kulaklık (EN 352)',
-  'İş Eldiveni',
-  'Toz Maskesi (FFP2)',
-  'Emniyet Kemeri',
-  'İş Ayakkabısı (S3)',
+export interface EquipmentTemplate {
+  id: string;
+  name: string;
+  type: string;
+  standard: string;
+  periodicCheckIntervalMonths: number;
+}
+
+const DEFAULT_TEMPLATES: EquipmentTemplate[] = [
+  { id: 'tpl-1', name: 'Standart Baret', type: 'Koruyucu Başlık', standard: 'EN 397', periodicCheckIntervalMonths: 12 },
+  { id: 'tpl-2', name: 'İş Eldiveni', type: 'Koruyucu Eldiven', standard: 'EN 388', periodicCheckIntervalMonths: 6 },
+  { id: 'tpl-3', name: 'Kulaklık', type: 'İşitme Koruyucu', standard: 'EN 352', periodicCheckIntervalMonths: 12 },
+  { id: 'tpl-4', name: 'Toz Maskesi (FFP2)', type: 'Solunum Koruyucu', standard: 'EN 149', periodicCheckIntervalMonths: 0 },
 ];
 
 function generateId(): string {
   return `eq-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function generateTemplateId(): string {
+  return `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 /** Find first equipment item matching name (and optionally company). Used to link request equipmentName to inventory. */
@@ -37,11 +46,13 @@ export function findEquipmentByName(name: string, companyId?: string): Equipment
 
 interface EquipmentState {
   items: Equipment[];
+  templates: EquipmentTemplate[];
   addEquipment: (item: Omit<Equipment, 'id'>) => Equipment;
   updateEquipment: (id: string, data: Partial<Omit<Equipment, 'id'>>) => void;
   deleteEquipment: (id: string) => void;
-  addFromTemplate: (templateNames: string[], defaultStock: number, companyId: string) => Equipment[];
-  /** Decrement currentStock by amount (default 1). Clamped to 0. */
+  addTemplate: (template: Omit<EquipmentTemplate, 'id'>) => EquipmentTemplate;
+  deleteTemplate: (id: string) => void;
+  addFromTemplate: (templateId: string, companyId: string, defaultStock?: number) => Equipment | undefined;
   decrementStock: (id: string, quantity?: number) => void;
   getEquipmentById: (id: string) => Equipment | undefined;
   findEquipmentByName: (name: string, companyId?: string) => Equipment | undefined;
@@ -52,6 +63,7 @@ export const useEquipmentStore = create<EquipmentState>()(
   persist(
     (set, get) => ({
       items: [],
+      templates: [...DEFAULT_TEMPLATES],
 
       addEquipment: (item) => {
         const equipment: Equipment = {
@@ -72,22 +84,33 @@ export const useEquipmentStore = create<EquipmentState>()(
         set((state) => ({ items: state.items.filter((e) => e.id !== id) }));
       },
 
-      addFromTemplate: (templateNames, defaultStock, companyId) => {
-        const added: Equipment[] = [];
+      addTemplate: (template) => {
+        const t: EquipmentTemplate = {
+          ...template,
+          id: generateTemplateId(),
+        };
+        set((state) => ({ templates: [...state.templates, t] }));
+        return t;
+      },
+
+      deleteTemplate: (id) => {
+        set((state) => ({ templates: state.templates.filter((t) => t.id !== id) }));
+      },
+
+      addFromTemplate: (templateId, companyId, defaultStock = 50) => {
+        const template = get().templates.find((t) => t.id === templateId);
+        if (!template) return undefined;
         const stock = Math.max(0, Math.floor(defaultStock));
-        templateNames.forEach((name) => {
-          const equipment: Equipment = {
-            id: generateId(),
-            companyId,
-            name,
-            standard: '',
-            totalStock: stock,
-            currentStock: stock,
-          };
-          added.push(equipment);
-        });
-        set((state) => ({ items: [...added, ...state.items] }));
-        return added;
+        const equipment: Equipment = {
+          id: generateId(),
+          companyId,
+          name: template.name,
+          standard: template.standard,
+          totalStock: stock,
+          currentStock: stock,
+        };
+        set((state) => ({ items: [equipment, ...state.items] }));
+        return equipment;
       },
 
       decrementStock: (id, quantity = 1) => {
@@ -116,6 +139,6 @@ export const useEquipmentStore = create<EquipmentState>()(
         if (!isDemo) set({ items: [] });
       },
     }),
-    { name: 'ohs-equipment', partialize: (s) => ({ items: s.items }) }
+    { name: 'ohs-equipment', partialize: (s) => ({ items: s.items, templates: s.templates }) }
   )
 );

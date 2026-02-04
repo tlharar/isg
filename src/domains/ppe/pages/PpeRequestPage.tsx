@@ -22,7 +22,7 @@ import { notifications } from '@mantine/notifications';
 import { usePpeRequestStore, type PpeRequest, type PpeRequestStatus } from '@store/ppeRequestStore';
 import { useWorkerStore } from '@store/workerStore';
 import { useAppStore } from '@shared/stores/appStore';
-import { PPE_TEMPLATES, useEquipmentStore } from '@store/equipmentStore';
+import { useEquipmentStore } from '@store/equipmentStore';
 import { usePpeStore } from '@domains/ppe/stores/ppeStore';
 
 type StatusFilter = 'all' | 'pending' | 'approved';
@@ -50,6 +50,7 @@ export function PpeRequestPage() {
   const requests = usePpeRequestStore((s) => s.requests);
   const addRequest = usePpeRequestStore((s) => s.addRequest);
   const updateStatus = usePpeRequestStore((s) => s.updateStatus);
+  const templates = useEquipmentStore((s) => s.templates);
   const findEquipmentByName = useEquipmentStore((s) => s.findEquipmentByName);
   const decrementStock = useEquipmentStore((s) => s.decrementStock);
   const addRecord = usePpeStore((s) => s.addRecord);
@@ -70,7 +71,10 @@ export function PpeRequestPage() {
     return list.map((w) => ({ value: w.id, label: w.nameSurname }));
   }, [workers, selectedCompanyId]);
 
-  const equipmentOptions = PPE_TEMPLATES.map((name) => ({ value: name, label: name }));
+  const equipmentOptions = useMemo(
+    () => templates.map((t) => ({ value: t.name, label: t.name })),
+    [templates]
+  );
 
   const filteredRequests = useMemo(() => {
     if (filter === 'pending') return requests.filter((r) => r.status === 'Pending');

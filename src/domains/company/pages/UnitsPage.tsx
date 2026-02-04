@@ -15,6 +15,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconEdit, IconTrash, IconDownload, IconAlertTriangle } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
+import { exportTableToExcel } from '@shared/utils';
 import { useUnitStore, type Unit, type HazardClass } from '@store/unitStore';
 import { useCompanyStore } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
@@ -81,11 +82,22 @@ export function UnitsPage() {
   };
 
   const handleExcelDownload = () => {
-    // Placeholder for Excel export
+    const TURKISH_COLUMNS = ['Birim Adı', 'Birim Sorumlusu', 'Tehlike Sınıfı', 'Çalışan Sayısı', 'Açıklama'] as const;
+    const mappedData = units.map((unit) => ({
+      'Birim Adı': unit.name,
+      'Birim Sorumlusu': unit.managerName,
+      'Tehlike Sınıfı': unit.hazardClass,
+      'Çalışan Sayısı': unit.employeeCount,
+      'Açıklama': unit.description ?? '',
+    }));
+    const filename = company?.name
+      ? `${company.name.replace(/\s+/g, '_')}_Birimler`
+      : 'Birim_Listesi';
+    exportTableToExcel(mappedData, [...TURKISH_COLUMNS], filename);
     notifications.show({
       title: t('units.excelDownload'),
       message: t('units.excelDownloadMessage'),
-      color: 'blue',
+      color: 'green',
     });
   };
 

@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Title,
   Text,
@@ -78,11 +80,74 @@ export function RepresentativePage() {
     }
   };
 
-  const handleDownloadTutanak = () => {
+  const handleDownloadMinutes = () => {
+    if (representatives.length === 0) return;
+
+    notifications.show({
+      title: t('representatives.tutanakDownload'),
+      message: 'Tutanak hazırlanıyor...',
+      color: 'blue',
+      autoClose: 2000,
+    });
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const companyName = company?.name ?? 'Firma';
+    const dateStr = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    // Header: Company name and date
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(companyName, 14, 16);
+    doc.text(dateStr, pageWidth - 14, 16, { align: 'right' });
+
+    // Title
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ÇALIŞAN TEMSİLCİSİ SEÇİM TUTANAĞI', pageWidth / 2, 28, { align: 'center' });
+
+    // Body statement
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const bodyText =
+      'İşyerimizde yapılan seçim/atama sonucunda aşağıda isimleri belirtilen çalışanlar, İş Sağlığı ve Güvenliği Çalışan Temsilcisi olarak belirlenmiştir.';
+    const bodyLines = doc.splitTextToSize(bodyText, pageWidth - 28);
+    doc.text(bodyLines, 14, 40);
+
+    // Table: representatives (Name, Görev/Unvan)
+    const tableData = representatives.map((rep) => [rep.employeeName, rep.jobTitle ?? '—']);
+    autoTable(doc, {
+      head: [['Ad Soyad', 'Görev / Unvan']],
+      body: tableData,
+      startY: 52,
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [66, 66, 66] },
+      columnStyles: { 0: { cellWidth: 70 }, 1: { cellWidth: 'auto' } },
+    });
+
+    const tableEndY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 60;
+
+    // Footer: Signatures section
+    const footerY = Math.min(tableEndY + 24, 250);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const lineY = footerY + 18;
+    doc.line(14, lineY, 60, lineY);
+    doc.line(80, lineY, 126, lineY);
+    doc.line(140, lineY, 186, lineY);
+    doc.setFontSize(9);
+    doc.text('İşveren', 37, lineY + 6, { align: 'center' });
+    doc.text('İSG Uzmanı', 103, lineY + 6, { align: 'center' });
+    doc.text('Temsilci', 163, lineY + 6, { align: 'center' });
+
+    const filename = `${companyName.replace(/\s+/g, '_')}_Temsilci_Tutanagi.pdf`;
+    doc.save(filename);
+
     notifications.show({
       title: t('representatives.tutanakDownload'),
       message: t('representatives.tutanakDownloadMessage'),
-      color: 'blue',
+      color: 'green',
     });
   };
 
@@ -112,9 +177,20 @@ export function RepresentativePage() {
               {company ? `${company.name} - ${t('representatives.subtitle')}` : t('representatives.subtitle')}
             </Text>
           </Box>
-          <Button leftSection={<IconPlus size={18} />} color="teal" onClick={handleAdd}>
-            {t('representatives.buttonAdd')}
-          </Button>
+          <Group gap="sm" wrap="wrap">
+            <Button
+              leftSection={<IconFileText size={18} />}
+              variant="light"
+              color="blue"
+              onClick={handleDownloadMinutes}
+              disabled={representatives.length === 0}
+            >
+              {t('representatives.downloadTutanak')}
+            </Button>
+            <Button leftSection={<IconPlus size={18} />} color="teal" onClick={handleAdd}>
+              {t('representatives.buttonAdd')}
+            </Button>
+          </Group>
         </Group>
 
         <Paper withBorder>
@@ -183,7 +259,7 @@ export function RepresentativePage() {
                             <ActionIcon
                               variant="subtle"
                               color="blue"
-                              onClick={() => handleDownloadTutanak()}
+                              onClick={handleDownloadMinutes}
                               aria-label={t('representatives.downloadTutanak')}
                               title={t('representatives.downloadTutanak')}
                             >

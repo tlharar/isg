@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import * as htmlToImage from 'html-to-image';
 import {
   Title,
   Text as MantineText,
@@ -12,9 +13,16 @@ import {
   Slider,
   SegmentedControl,
   ActionIcon,
+  Modal,
+  TextInput,
+  Select,
+  Drawer,
+  Card,
 } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import {
   IconUpload,
+  IconDeviceFloppy,
   IconFlame,
   IconFireHydrant,
   IconBellRinging,
@@ -25,14 +33,24 @@ import {
   IconMapPin,
   IconRotateClockwise2,
   IconTrash,
+  IconArchive,
+  IconDownload,
+  IconFolderOpen,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import {
   useFloorPlanStore,
+  generatePlanId,
   type FloorPlanMarker,
   type MarkerType,
   type MarkerSize,
+  type SavedPlan,
 } from '@store/floorPlanStore';
+
+const MOCK_COMPANIES = [
+  { value: 'abc', label: 'ABC Lojistik' },
+  { value: 'xyz', label: 'XYZ İnşaat' },
+];
 
 type IconComponent = typeof IconFlame;
 
@@ -75,19 +93,45 @@ function getMarkerConfig(type: string): { label: string; Icon: IconComponent; co
   return MARKER_CONFIG.fire_extinguisher;
 }
 
+function formatDisplayDate(dateStr: string): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return Number.isNaN(d.getTime())
+    ? dateStr
+    : d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function downloadImage(dataUrl: string | null, filename: string) {
+  if (!dataUrl) return;
+  const ext = dataUrl.startsWith('data:image/png') ? 'png' : 'jpg';
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = `${filename.replace(/\s+/g, '-')}.${ext}`;
+  link.click();
+}
+
 export function FloorPlanPage() {
   const imageDataUrl = useFloorPlanStore((s) => s.imageDataUrl);
   const markers = useFloorPlanStore((s) => s.markers);
+  const savedPlans = useFloorPlanStore((s) => s.savedPlans);
   const setImage = useFloorPlanStore((s) => s.setImage);
   const addMarker = useFloorPlanStore((s) => s.addMarker);
   const removeMarker = useFloorPlanStore((s) => s.removeMarker);
   const updateMarkerRotation = useFloorPlanStore((s) => s.updateMarkerRotation);
   const updateMarkerSize = useFloorPlanStore((s) => s.updateMarkerSize);
   const clearAll = useFloorPlanStore((s) => s.clearAll);
+  const savePlan = useFloorPlanStore((s) => s.savePlan);
+  const deletePlan = useFloorPlanStore((s) => s.deletePlan);
+  const loadPlanToEditor = useFloorPlanStore((s) => s.loadPlanToEditor);
 
   const [selectedType, setSelectedType] = useState<MarkerType>('fire_extinguisher');
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const planContainerRef = useRef<HTMLDivElement>(null);
+
+  const [saveModalOpened, { open: openSaveModal, close: closeSaveModal }] = useDisclosure(false);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
+  const [savePlanName, setSavePlanName] = useState('');
+  const [saveCompanyId, setSaveCompanyId] = useState<string | null>(null);
 
   const selectedMarker = selectedMarkerId
     ? markers.find((m) => m.id === selectedMarkerId)
@@ -153,6 +197,110 @@ export function FloorPlanPage() {
     }
   };
 
+  const handleSaveClick = () => {
+    if (!imageDataUrl) return;
+    setSavePlanName('');
+    setSaveCompanyId(MOCK_COMPANIES[0]?.value ?? null);
+    openSaveModal();
+  };
+
+  const handleSaveConfirm = () => {
+    const name = savePlanName.trim();
+    if (!name) {
+      notifications.show({ title: 'Eksik alan', message: 'Plan adı girin.', color: 'red' });
+      return;
+    }
+    const company = MOCK_COMPANIES.find((c) => c.value === saveCompanyId);
+    if (!company) {
+      notifications.show({ title: 'Eksik alan', message: 'Şirket seçin.', color: 'red' });
+      return;
+    }
+    const plan: SavedPlan = {
+      id: generatePlanId(),
+      companyId: company.value,
+      companyName: company.label,
+      name,
+      date: new Date().toISOString().slice(0, 10),
+      backgroundImage: imageDataUrl,
+      icons: markers,
+    };
+    savePlan(plan);
+    closeSaveModal();
+    notifications.show({
+      title: 'Kaydedildi',
+      message: 'Kroki başarıyla kaydedildi.',
+      color: 'green',
+    });
+  };
+
+  const handleLoadPlan = (plan: SavedPlan) => {
+    loadPlanToEditor(plan);
+    setSelectedMarkerId(null);
+    closeDrawer();
+    notifications.show({
+      title: 'Yüklendi',
+      message: `"${plan.name}" krokisi düzenlemek için yüklendi.`,
+      color: 'green',
+    });
+  };
+
+  const handleCompositeDownload = useCallback(async () => {
+    if (!planContainerRef.current) {
+      notifications.show({
+        title: 'Hata',
+        message: 'Görüntü alanı bulunamadı.',
+        color: 'red',
+      });
+      return;
+    }
+    notifications.show({
+      title: 'Hazırlanıyor',
+      message: 'Görüntü hazırlanıyor...',
+      color: 'blue',
+      autoClose: 2000,
+    });
+    try {
+      const dataUrl = await htmlToImage.toPng(planContainerRef.current, {
+        quality: 0.95,
+        backgroundColor: 'white',
+      });
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'Duzenlenmis_Kroki.png';
+      link.click();
+      link.remove();
+      notifications.show({
+        title: 'İndirildi',
+        message: 'Düzenlenmiş kroki (arka plan + ikonlar) indirildi.',
+        color: 'green',
+      });
+    } catch (err) {
+      notifications.show({
+        title: 'Hata',
+        message: 'Görüntü oluşturulurken bir hata oluştu.',
+        color: 'red',
+      });
+    }
+  }, []);
+
+  const handleDownloadPlan = (plan: SavedPlan) => {
+    notifications.show({
+      title: 'Kayıtlı plan',
+      message: 'Önce planı yükleyin, ardından ana ekrandan indirin.',
+      color: 'blue',
+    });
+  };
+
+  const handleDeletePlan = (plan: SavedPlan) => {
+    if (!window.confirm(`"${plan.name}" krokisini silmek istediğinize emin misiniz?`)) return;
+    deletePlan(plan.id);
+    notifications.show({
+      title: 'Silindi',
+      message: 'Kroki listeden kaldırıldı.',
+      color: 'gray',
+    });
+  };
+
   return (
     <Stack gap="md">
       <Group justify="space-between">
@@ -170,6 +318,29 @@ export function FloorPlanPage() {
               </Button>
             )}
           </FileButton>
+          <Button
+            leftSection={<IconDeviceFloppy size={16} />}
+            onClick={handleSaveClick}
+            disabled={!imageDataUrl}
+          >
+            Kaydet
+          </Button>
+          {imageDataUrl && (
+            <Button
+              variant="default"
+              leftSection={<IconDownload size={16} />}
+              onClick={handleCompositeDownload}
+            >
+              İndir
+            </Button>
+          )}
+          <Button
+            variant="default"
+            leftSection={<IconArchive size={16} />}
+            onClick={openDrawer}
+          >
+            Arşiv / Kayıtlı Dosyalar
+          </Button>
           {imageDataUrl && (
             <Button variant="default" color="red" onClick={handleClearAll}>
               Temizle
@@ -177,6 +348,94 @@ export function FloorPlanPage() {
           )}
         </Group>
       </Group>
+
+      <Modal
+        title="Kroki Kaydet"
+        opened={saveModalOpened}
+        onClose={closeSaveModal}
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            label="Plan Adı"
+            placeholder="Örn. Zemin Kat Tahliye Planı"
+            value={savePlanName}
+            onChange={(e) => setSavePlanName(e.currentTarget.value)}
+          />
+          <Select
+            label="Şirket"
+            placeholder="Şirket seçin"
+            data={MOCK_COMPANIES}
+            value={saveCompanyId}
+            onChange={setSaveCompanyId}
+          />
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={closeSaveModal}>
+              İptal
+            </Button>
+            <Button onClick={handleSaveConfirm} leftSection={<IconDeviceFloppy size={16} />}>
+              Kaydet
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Drawer
+        title="Kayıtlı Krokiler"
+        position="right"
+        opened={drawerOpened}
+        onClose={closeDrawer}
+        size="md"
+      >
+        <Stack gap="md">
+          {savedPlans.length === 0 ? (
+            <MantineText c="dimmed" size="sm">
+              Henüz kayıtlı kroki yok. Kroki oluşturup &quot;Kaydet&quot; ile kaydedin.
+            </MantineText>
+          ) : (
+            savedPlans.map((plan) => (
+              <Card key={plan.id} withBorder padding="md" radius="md">
+                <Stack gap="xs">
+                  <MantineText fw={600} size="sm">
+                    {plan.name}
+                  </MantineText>
+                  <MantineText size="xs" c="dimmed">
+                    {plan.companyName} · {formatDisplayDate(plan.date)}
+                  </MantineText>
+                  <Group gap="xs" mt="xs">
+                    <Button
+                      size="xs"
+                      variant="light"
+                      leftSection={<IconFolderOpen size={14} />}
+                      onClick={() => handleLoadPlan(plan)}
+                    >
+                      Yükle
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="light"
+                      leftSection={<IconDownload size={14} />}
+                      onClick={() => handleDownloadPlan(plan)}
+                      disabled={!plan.backgroundImage}
+                    >
+                      İndir
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="light"
+                      color="red"
+                      leftSection={<IconTrash size={14} />}
+                      onClick={() => handleDeletePlan(plan)}
+                    >
+                      Sil
+                    </Button>
+                  </Group>
+                </Stack>
+              </Card>
+            ))
+          )}
+        </Stack>
+      </Drawer>
 
       <Group align="flex-start" wrap="nowrap" gap="lg" style={{ alignItems: 'stretch' }}>
         {/* Sticky Toolbar */}
@@ -301,7 +560,7 @@ export function FloorPlanPage() {
             </Box>
           ) : (
             <Box
-              ref={containerRef}
+              ref={planContainerRef}
               onClick={handleImageClick}
               style={{
                 position: 'relative',

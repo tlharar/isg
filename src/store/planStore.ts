@@ -27,6 +27,13 @@ export interface AnnualPlan {
   creationDate: string;
   items: PlanItem[];
   attachments: PlanAttachment[];
+  isCompleted?: boolean;
+}
+
+export interface PlanTemplate {
+  id: string;
+  name: string;
+  createdAt: Date;
 }
 
 /** Work plan (Yıllık Çalışma Planı) templates */
@@ -64,14 +71,16 @@ export const ASSESSMENT_TEMPLATES: string[] = [
   'Ramak Kala Analiz Raporu',
 ];
 
-export function getTemplatesForType(type: PlanType): string[] {
+export function getTemplatesForType(type: PlanType, templates?: PlanTemplate[]): string[] {
   switch (type) {
     case 'TRAINING':
       return TRAINING_TEMPLATES;
     case 'ASSESSMENT':
       return ASSESSMENT_TEMPLATES;
     default:
-      return PLAN_TEMPLATES;
+      return templates && templates.length > 0
+        ? templates.map((t) => t.name)
+        : PLAN_TEMPLATES;
   }
 }
 
@@ -93,6 +102,15 @@ function generateId(): string {
   return `plan-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function generateTemplateId(): string {
+  return `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+const DEFAULT_WORK_TEMPLATES: PlanTemplate[] = [
+  { id: 'tpl-default-1', name: 'Standart Yıllık Plan', createdAt: new Date() },
+  { id: 'tpl-default-2', name: 'Risk Değerlendirme Planı', createdAt: new Date() },
+];
+
 /** Normalize URL planType to PlanType */
 export function normalizePlanType(planType: string | undefined): PlanType {
   const t = (planType || '').toUpperCase();
@@ -102,6 +120,7 @@ export function normalizePlanType(planType: string | undefined): PlanType {
 
 interface PlanState {
   plans: AnnualPlan[];
+  templates: PlanTemplate[];
   addPlan: (data: Omit<AnnualPlan, 'id' | 'creationDate'>) => AnnualPlan;
   updatePlan: (id: string, data: Partial<Omit<AnnualPlan, 'id'>>) => void;
   deletePlan: (id: string) => void;
@@ -110,10 +129,12 @@ interface PlanState {
   getPlansByCompanyAndType: (companyId: string, type: PlanType) => AnnualPlan[];
   getPlanByCompanyAndYear: (companyId: string, year: number) => AnnualPlan | undefined;
   getPlanByCompanyYearAndType: (companyId: string, year: number, type: PlanType) => AnnualPlan | undefined;
-  /** Latest plan (by year) for a company and type; for summary status */
   getLatestPlanByCompanyAndType: (companyId: string, type: PlanType) => AnnualPlan | undefined;
   addAttachment: (planId: string, name: string) => void;
   removeAttachment: (planId: string, attachmentId: string) => void;
+  addTemplate: (name: string) => void;
+  deleteTemplate: (id: string) => void;
+  toggleComplete: (id: string) => void;
   loadData: (isDemo: boolean) => void;
 }
 
@@ -121,6 +142,7 @@ export const usePlanStore = create<PlanState>()(
   persist(
     (set, get) => ({
       plans: [],
+      templates: [...DEFAULT_WORK_TEMPLATES],
 
       addPlan: (data) => {
         const plan: AnnualPlan = {
@@ -187,11 +209,32 @@ export const usePlanStore = create<PlanState>()(
         }));
       },
 
+      addTemplate: (name) => {
+        const t: PlanTemplate = {
+          id: generateTemplateId(),
+          name: name.trim(),
+          createdAt: new Date(),
+        };
+        set((state) => ({ templates: [...state.templates, t] }));
+      },
+
+      deleteTemplate: (id) => {
+        set((state) => ({ templates: state.templates.filter((t) => t.id !== id) }));
+      },
+
+      toggleComplete: (id) => {
+        set((state) => ({
+          plans: state.plans.map((p) =>
+            p.id === id ? { ...p, isCompleted: !p.isCompleted } : p
+          ),
+        }));
+      },
+
       loadData: (isDemo) => {
         if (!isDemo) set({ plans: [] });
       },
     }),
-    { name: 'ohs-plans', partialize: (s) => ({ plans: s.plans }) }
+    { name: 'ohs-plans', partialize: (s) => ({ plans: s.plans, templates: s.templates }) }
   )
 );
 

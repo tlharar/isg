@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
-import { Modal, TextInput, Select, NumberInput, Button, Stack, Group } from '@mantine/core';
+import { useEffect, useMemo } from 'react';
+import { Modal, TextInput, Select, MultiSelect, NumberInput, Button, Stack, Group } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useTranslation } from '@shared/i18n';
+import { useWorkerStore } from '@store/workerStore';
 import type { EducationSession, EducationType, EducationStatus } from '@store/educationStore';
 
 interface EducationModalProps {
@@ -38,32 +39,26 @@ const STATUS_OPTIONS = [
   { value: 'İptal', label: 'İptal' },
 ];
 
-// Mock attendees for MultiSelect (in real app, fetch from worker/employee store)
-const MOCK_ATTENDEES = [
-  { value: 'Ali Demir', label: 'Ali Demir' },
-  { value: 'Ayşe Kaya', label: 'Ayşe Kaya' },
-  { value: 'Mehmet Öz', label: 'Mehmet Öz' },
-  { value: 'Fatma Yıldız', label: 'Fatma Yıldız' },
-  { value: 'Can Arslan', label: 'Can Arslan' },
-  { value: 'Emre Şahin', label: 'Emre Şahin' },
-  { value: 'Zeynep Çelik', label: 'Zeynep Çelik' },
-  { value: 'Ahmet Demir', label: 'Ahmet Demir' },
-];
-
 export function EducationModal({ opened, onClose, onSubmit, initialValues, title }: EducationModalProps) {
   const { t } = useTranslation();
+  const workers = useWorkerStore((s) => s.workers);
+
+  const attendeeOptions = useMemo(
+    () => workers.map((w) => ({ value: w.id, label: w.nameSurname })),
+    [workers]
+  );
 
   const form = useForm<EducationFormValues>({
     initialValues: {
-      title: initialValues?.title || '',
-      type: initialValues?.type || 'Temel Eğitim',
-      trainer: initialValues?.trainer || '',
-      date: initialValues?.date ? new Date(initialValues.date) : new Date(),
-      validUntil: initialValues?.validUntil ? new Date(initialValues.validUntil) : new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-      durationHours: initialValues?.durationHours || 8,
-      location: initialValues?.location || '',
-      attendees: initialValues?.attendees || [],
-      status: initialValues?.status || 'Planlandı',
+      title: '',
+      type: 'Temel Eğitim',
+      trainer: '',
+      date: new Date(),
+      validUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      durationHours: 8,
+      location: '',
+      attendees: [],
+      status: 'Planlandı',
     },
     validate: {
       title: (value) => (!value.trim() ? t('education.form.titleRequired') : null),
@@ -83,9 +78,9 @@ export function EducationModal({ opened, onClose, onSubmit, initialValues, title
         trainer: initialValues?.trainer || '',
         date: initialValues?.date ? new Date(initialValues.date) : new Date(),
         validUntil: initialValues?.validUntil ? new Date(initialValues.validUntil) : new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-        durationHours: initialValues?.durationHours || 8,
+        durationHours: initialValues?.durationHours ?? 8,
         location: initialValues?.location || '',
-        attendees: initialValues?.attendees || [],
+        attendees: initialValues?.attendees ?? [],
         status: initialValues?.status || 'Planlandı',
       });
     }
@@ -168,14 +163,13 @@ export function EducationModal({ opened, onClose, onSubmit, initialValues, title
             {...form.getInputProps('location')}
           />
 
-          {/* Attendees (MultiSelect) */}
-          <Select
+          {/* Katılımcılar (MultiSelect) */}
+          <MultiSelect
             label={t('education.form.attendees')}
             placeholder={t('education.form.selectAttendees')}
-            data={MOCK_ATTENDEES}
+            data={attendeeOptions}
             required
             searchable
-            multiple
             {...form.getInputProps('attendees')}
           />
 

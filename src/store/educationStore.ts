@@ -4,6 +4,15 @@ import { persist } from 'zustand/middleware';
 export type EducationType = 'İşe Başlama' | 'Temel Eğitim' | 'Mesleki Eğitim' | 'Yenileme';
 export type EducationStatus = 'Planlandı' | 'Tamamlandı' | 'İptal';
 
+export interface EducationTemplate {
+  id: string;
+  name: string;
+  createdAt: Date;
+}
+
+/** @deprecated Use EducationTemplate */
+export type PlanTemplate = EducationTemplate;
+
 export interface EducationSession {
   id: string;
   title: string;
@@ -13,22 +22,21 @@ export interface EducationSession {
   validUntil: Date;
   durationHours: number;
   location: string;
-  attendees: string[]; // Names or IDs of workers
+  attendees: string[];
   status: EducationStatus;
   createdAt: Date;
   updatedAt: Date;
+  isCompleted?: boolean;
 }
 
-interface EducationState {
-  sessions: EducationSession[];
-  addSession: (session: Omit<EducationSession, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateSession: (id: string, session: Partial<Omit<EducationSession, 'id' | 'createdAt' | 'updatedAt'>>) => void;
-  deleteSession: (id: string) => void;
-  getSessionById: (id: string) => EducationSession | undefined;
-  loadData: (isDemo: boolean) => void;
+const DEFAULT_TEMPLATES: EducationTemplate[] = [
+  { id: 't1', name: 'Standart Yıllık İSG Planı', createdAt: new Date() },
+];
+
+function generateTemplateId(): string {
+  return `edu-tpl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** Kept outside store for reuse (e.g. loadData). */
 const MOCK_SESSIONS: EducationSession[] = [
   {
     id: 'edu-1',
@@ -116,45 +124,84 @@ const MOCK_SESSIONS: EducationSession[] = [
   },
 ];
 
+interface EducationState {
+  sessions: EducationSession[];
+  templates: EducationTemplate[];
+  addSession: (session: Omit<EducationSession, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateSession: (id: string, session: Partial<Omit<EducationSession, 'id' | 'createdAt' | 'updatedAt'>>) => void;
+  deleteSession: (id: string) => void;
+  getSessionById: (id: string) => EducationSession | undefined;
+  addTemplate: (name: string) => void;
+  deleteTemplate: (id: string) => void;
+  toggleComplete: (id: string) => void;
+  loadData: (isDemo: boolean) => void;
+}
+
 export const useEducationStore = create<EducationState>()(
   persist(
     (set, get) => ({
       sessions: [],
+      templates: [...DEFAULT_TEMPLATES],
+
       addSession: (session) => {
         const now = new Date();
         const newSession: EducationSession = {
           ...session,
-          id: `edu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `edu-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
           createdAt: now,
           updatedAt: now,
         };
         set((state) => ({ sessions: [...state.sessions, newSession] }));
       },
+
       updateSession: (id, updates) => {
         set((state) => ({
-          sessions: state.sessions.map((session) =>
-            session.id === id
-              ? { ...session, ...updates, updatedAt: new Date() }
-              : session
+          sessions: state.sessions.map((s) =>
+            s.id === id ? { ...s, ...updates, updatedAt: new Date() } : s
           ),
         }));
       },
+
       deleteSession: (id) => {
         set((state) => ({
-          sessions: state.sessions.filter((session) => session.id !== id),
+          sessions: state.sessions.filter((s) => s.id !== id),
         }));
       },
-      getSessionById: (id) => {
-        return get().sessions.find((session) => session.id === id);
+
+      getSessionById: (id) => get().sessions.find((s) => s.id === id),
+
+      addTemplate: (name) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        const template: EducationTemplate = {
+          id: generateTemplateId(),
+          name: trimmed,
+          createdAt: new Date(),
+        };
+        set((state) => ({ templates: [...state.templates, template] }));
+      },
+
+      deleteTemplate: (id) => {
+        set((state) => ({
+          templates: state.templates.filter((t) => t.id !== id),
+        }));
+      },
+
+      toggleComplete: (id) => {
+        set((state) => ({
+          sessions: state.sessions.map((s) =>
+            s.id === id ? { ...s, isCompleted: !s.isCompleted } : s
+          ),
+        }));
       },
 
       loadData: (isDemo) => {
-        if (isDemo) set({ sessions: [...MOCK_SESSIONS] });
-        else set({ sessions: [] });
+        set({ sessions: isDemo ? [...MOCK_SESSIONS] : [] });
       },
     }),
     {
       name: 'ohs-education-store',
+      partialize: (s) => ({ sessions: s.sessions, templates: s.templates }),
     }
   )
 );

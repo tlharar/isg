@@ -10,31 +10,50 @@ import {
   TextInput,
   NumberInput,
   Modal,
-  Checkbox,
   Badge,
   Progress,
   ActionIcon,
+  Divider,
+  Select,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconEdit, IconTrash } from '@tabler/icons-react';
-import { useEquipmentStore, PPE_TEMPLATES, type Equipment } from '@store/equipmentStore';
+import { useEquipmentStore, type Equipment, type EquipmentTemplate } from '@store/equipmentStore';
 import { useCompanyStore } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
+
+const EQUIPMENT_TYPE_OPTIONS = [
+  { value: 'Koruyucu Başlık', label: 'Koruyucu Başlık' },
+  { value: 'Koruyucu Eldiven', label: 'Koruyucu Eldiven' },
+  { value: 'İşitme Koruyucu', label: 'İşitme Koruyucu' },
+  { value: 'Solunum Koruyucu', label: 'Solunum Koruyucu' },
+  { value: 'Koruyucu Ayakkabı', label: 'Koruyucu Ayakkabı' },
+  { value: 'Emniyet Kemeri', label: 'Emniyet Kemeri' },
+  { value: 'Diğer', label: 'Diğer' },
+];
 
 export function EquipmentListPage() {
   const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
   const items = useEquipmentStore((s) => s.items);
+  const templates = useEquipmentStore((s) => s.templates);
   const addEquipment = useEquipmentStore((s) => s.addEquipment);
   const updateEquipment = useEquipmentStore((s) => s.updateEquipment);
   const deleteEquipment = useEquipmentStore((s) => s.deleteEquipment);
+  const addTemplate = useEquipmentStore((s) => s.addTemplate);
+  const deleteTemplate = useEquipmentStore((s) => s.deleteTemplate);
   const addFromTemplate = useEquipmentStore((s) => s.addFromTemplate);
 
   const [templateOpened, { open: openTemplate, close: closeTemplate }] = useDisclosure(false);
   const [formOpened, { open: openForm, close: closeForm }] = useDisclosure(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [templateSelected, setTemplateSelected] = useState<string[]>([]);
   const [defaultStock, setDefaultStock] = useState(50);
   const [form, setForm] = useState({ name: '', standard: '', totalStock: 10 });
+  const [templateForm, setTemplateForm] = useState({
+    name: '',
+    type: EQUIPMENT_TYPE_OPTIONS[0]?.value ?? 'Diğer',
+    standard: '',
+    periodicCheckIntervalMonths: 12,
+  });
 
   const filteredItems = useMemo(() => {
     const cid = selectedCompanyId ?? '';
@@ -89,17 +108,31 @@ export function EquipmentListPage() {
     closeForm();
   };
 
-  const handleTemplateAdd = () => {
-    if (templateSelected.length === 0 || !companyId) return;
-    addFromTemplate(templateSelected, defaultStock, companyId);
-    setTemplateSelected([]);
-    closeTemplate();
+  const handleCreateTemplate = () => {
+    if (!templateForm.name.trim()) return;
+    addTemplate({
+      name: templateForm.name.trim(),
+      type: templateForm.type,
+      standard: templateForm.standard.trim(),
+      periodicCheckIntervalMonths: Math.max(0, templateForm.periodicCheckIntervalMonths),
+    });
+    setTemplateForm({
+      name: '',
+      type: EQUIPMENT_TYPE_OPTIONS[0]?.value ?? 'Diğer',
+      standard: '',
+      periodicCheckIntervalMonths: 12,
+    });
   };
 
-  const toggleTemplate = (name: string) => {
-    setTemplateSelected((prev) =>
-      prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name]
-    );
+  const handleAddFromTemplate = (tmpl: EquipmentTemplate) => {
+    if (!companyId) return;
+    addFromTemplate(tmpl.id, companyId, defaultStock);
+  };
+
+  const handleDeleteTemplate = (tmpl: EquipmentTemplate) => {
+    if (window.confirm(`"${tmpl.name}" şablonunu silmek istediğinize emin misiniz?`)) {
+      deleteTemplate(tmpl.id);
+    }
   };
 
   const fillPercent = (eq: Equipment) =>
@@ -123,7 +156,7 @@ export function EquipmentListPage() {
           </div>
           <Group>
             <Button variant="default" leftSection={<IconPlus size={16} />} onClick={openTemplate}>
-              Şablondan Hızlı Ekle
+              Şablon Yönetimi
             </Button>
             <Button leftSection={<IconPlus size={16} />} onClick={handleOpenAdd}>
               Yeni Ekipman Ekle
@@ -154,7 +187,7 @@ export function EquipmentListPage() {
                   <Table.Tr>
                     <Table.Td colSpan={6}>
                       <MantineText size="sm" c="dimmed" ta="center" py="md">
-                        Henüz ekipman eklenmemiş. &quot;Yeni Ekipman Ekle&quot; veya &quot;Şablondan Hızlı Ekle&quot; ile başlayın.
+                        Henüz ekipman eklenmemiş. &quot;Yeni Ekipman Ekle&quot; veya &quot;Şablon Yönetimi&quot; ile başlayın.
                       </MantineText>
                     </Table.Td>
                   </Table.Tr>
@@ -224,39 +257,103 @@ export function EquipmentListPage() {
         </Paper>
       </Stack>
 
-      {/* Template modal */}
-      <Modal opened={templateOpened} onClose={closeTemplate} title="Şablondan Hızlı Ekle" size="md">
-        <Stack gap="md">
-          <MantineText size="sm" c="dimmed">
-            Eklemek istediğiniz ekipmanları seçin. Hepsi aynı varsayılan stok adedi ile eklenecektir.
-          </MantineText>
-          <NumberInput
-            label="Varsayılan Stok Adedi"
-            min={0}
-            value={defaultStock}
-            onChange={(v) => setDefaultStock(typeof v === 'number' ? v : 0)}
-          />
-          <Stack gap="xs">
-            {PPE_TEMPLATES.map((name) => (
-              <Checkbox
-                key={name}
-                label={name}
-                checked={templateSelected.includes(name)}
-                onChange={() => toggleTemplate(name)}
+      {/* Template management modal */}
+      <Modal opened={templateOpened} onClose={closeTemplate} title="Şablon Yönetimi" size="md">
+        <Stack gap="lg">
+          {/* Section A: New template */}
+          <Stack gap="sm">
+            <MantineText size="sm" fw={600}>Yeni şablon oluştur</MantineText>
+            <TextInput
+              label="Şablon Adı"
+              placeholder="Örn: Standart Baret"
+              value={templateForm.name}
+              onChange={(e) => setTemplateForm((f) => ({ ...f, name: e.currentTarget.value }))}
+            />
+            <Select
+              label="Ekipman Türü"
+              placeholder="Tür seçin"
+              data={EQUIPMENT_TYPE_OPTIONS}
+              value={templateForm.type}
+              onChange={(v) => setTemplateForm((f) => ({ ...f, type: v ?? f.type }))}
+            />
+            <Group grow>
+              <TextInput
+                label="Standart"
+                placeholder="Örn: EN 397"
+                value={templateForm.standard}
+                onChange={(e) => setTemplateForm((f) => ({ ...f, standard: e.currentTarget.value }))}
               />
-            ))}
+              <NumberInput
+                label="Periyot (Ay)"
+                min={0}
+                value={templateForm.periodicCheckIntervalMonths}
+                onChange={(v) => setTemplateForm((f) => ({ ...f, periodicCheckIntervalMonths: typeof v === 'number' ? v : 0 }))}
+              />
+            </Group>
+            <Button onClick={handleCreateTemplate} disabled={!templateForm.name.trim()}>
+              Şablon Oluştur
+            </Button>
           </Stack>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={closeTemplate}>
-              İptal
-            </Button>
-            <Button
-              onClick={handleTemplateAdd}
-              disabled={templateSelected.length === 0 || !companyId}
-            >
-              Seçilenleri Ekle ({templateSelected.length})
-            </Button>
-          </Group>
+
+          <Divider label="Mevcut şablonlar" labelPosition="center" />
+
+          {/* Section B: Existing templates */}
+          <Stack gap="sm">
+            <NumberInput
+              label="Listeye eklerken varsayılan stok adedi"
+              min={0}
+              value={defaultStock}
+              onChange={(v) => setDefaultStock(typeof v === 'number' ? v : 0)}
+              size="xs"
+            />
+            {templates.length === 0 ? (
+              <MantineText size="sm" c="dimmed">Henüz şablon yok. Yukarıdan yeni şablon oluşturun.</MantineText>
+            ) : (
+              <Table withTableBorder withColumnBorders>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Şablon Adı</Table.Th>
+                    <Table.Th>Tür / Standart</Table.Th>
+                    <Table.Th style={{ width: 140 }}>İşlemler</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {templates.map((tmpl) => (
+                    <Table.Tr key={tmpl.id}>
+                      <Table.Td>
+                        <MantineText size="sm" fw={500}>{tmpl.name}</MantineText>
+                      </Table.Td>
+                      <Table.Td>
+                        <MantineText size="xs" c="dimmed">{tmpl.type} · {tmpl.standard || '—'}</MantineText>
+                      </Table.Td>
+                      <Table.Td>
+                        <Group gap="xs" wrap="nowrap">
+                          <Button
+                            size="xs"
+                            color="green"
+                            variant="light"
+                            onClick={() => handleAddFromTemplate(tmpl)}
+                            disabled={!companyId}
+                          >
+                            Listeye Ekle
+                          </Button>
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            size="sm"
+                            onClick={() => handleDeleteTemplate(tmpl)}
+                            aria-label="Sil"
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Group>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            )}
+          </Stack>
         </Stack>
       </Modal>
 

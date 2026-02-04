@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { jsPDF } from 'jspdf';
 import {
   Title,
   Text as MantineText,
@@ -129,9 +130,41 @@ export function EmergencyPlanPage() {
   const handleDownload = (plan: EmergencyPlan) => {
     notifications.show({
       title: 'İndiriliyor',
-      message: `"${plan.fileName}" simüle edildi. (Demo)`,
+      message: 'Plan indiriliyor...',
       color: 'blue',
+      autoClose: 2000,
     });
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ACİL DURUM PLANI', pageWidth / 2, 24, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(14);
+    doc.text(plan.title, margin, 36);
+
+    const typeLabel = PLAN_TYPE_OPTIONS.find((o) => o.value === plan.type)?.label ?? plan.type;
+    const createdFormatted = formatDate(plan.createdDate);
+    const validFormatted = formatDate(plan.validUntil);
+    const statusLabel = STATUS_LABELS[plan.status];
+
+    doc.setFontSize(11);
+    doc.text(`Plan Türü: ${typeLabel}`, margin, 50);
+    doc.text(`Versiyon: ${plan.version}`, margin, 58);
+    doc.text(`Oluşturulma Tarihi: ${createdFormatted}`, margin, 66);
+    doc.text(`Geçerlilik Tarihi: ${validFormatted}`, margin, 74);
+    doc.text(`Durum: ${statusLabel}`, margin, 82);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Bu belge dijital olarak oluşturulmuştur.', pageWidth / 2, doc.internal.pageSize.getHeight() - 15, { align: 'center' });
+
+    const fileName = plan.fileName?.trim() ? plan.fileName : `${plan.title.replace(/\s+/g, '-')}-${plan.version}.pdf`;
+    doc.save(fileName);
   };
 
   const handleDelete = (plan: EmergencyPlan) => {

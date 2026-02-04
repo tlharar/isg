@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Title,
   Text,
@@ -9,11 +10,13 @@ import {
   Table,
   ActionIcon,
   Menu,
-  FileInput,
+  FileButton,
+  Badge,
   Modal,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconDownload, IconDots, IconEdit, IconTrash, IconKey, IconBuilding, IconCertificate, IconLink } from '@tabler/icons-react';
+import { IconPlus, IconDownload, IconDots, IconEdit, IconTrash, IconKey, IconBuilding, IconCertificate, IconLink, IconUpload } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
 import { useExportExcel } from '@shared/utils';
 import type { WorkerFormValues } from '@domains/worker/schemas/workerSchema';
@@ -21,37 +24,101 @@ import { useWorkerStore, type Worker } from '@store/workerStore';
 import { useAppStore } from '@shared/stores/appStore';
 import { EmployeeModal } from '@domains/company/components/EmployeeModal';
 
-const SAMPLE_WORKER_COLUMNS = [
-  'nameSurname',
-  'idNumber',
-  'email',
-  'mobileNo',
-  'workNo',
-  'employmentStartDate',
-  'employmentEndDate',
-  'dateOfBirth',
-  'gender',
-  'visaDate',
-  'jobTitle',
+/** Turkish column headers for the Excel template */
+const TURKISH_TEMPLATE_COLUMNS = [
+  'Ad',
+  'Soyad',
+  'TC Kimlik No',
+  'Görevi',
+  'E-posta',
+  'Telefon',
+  'Doğum Tarihi',
+  'İşe Giriş Tarihi',
+  'Cinsiyet',
 ] as const;
 
-type WorkerExportRow = Record<(typeof SAMPLE_WORKER_COLUMNS)[number], string>;
+type TurkishTemplateRow = Record<(typeof TURKISH_TEMPLATE_COLUMNS)[number], string>;
 
-function workerToExportRow(w: Worker): WorkerExportRow {
+/** Map Turkish headers from uploaded file to internal keys */
+const HEADER_MAPPING: Record<string, string> = {
+  'Ad': 'name',
+  'Soyad': 'surname',
+  'TC Kimlik No': 'tcNo',
+  'Görevi': 'jobTitle',
+  'E-posta': 'email',
+  'Telefon': 'phone',
+  'Doğum Tarihi': 'birthDate',
+  'İşe Giriş Tarihi': 'startDate',
+  'Cinsiyet': 'gender',
+};
+
+const GENDER_TO_TURKISH: Record<string, string> = {
+  male: 'Erkek',
+  female: 'Kadın',
+  other: 'Diğer',
+};
+
+function workerToTurkishTemplateRow(w: Worker): TurkishTemplateRow {
   const formatDate = (d: Date | undefined): string =>
     d ? (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10)) : '';
+  const parts = (w.nameSurname ?? '').trim().split(/\s+/);
+  const ad = parts[0] ?? '';
+  const soyad = parts.slice(1).join(' ') ?? '';
   return {
-    nameSurname: w.nameSurname,
-    idNumber: w.idNumber,
-    email: w.email,
-    mobileNo: w.mobileNo ?? '',
-    workNo: w.workNo ?? '',
-    employmentStartDate: formatDate(w.employmentStartDate),
-    employmentEndDate: formatDate(w.employmentEndDate),
-    dateOfBirth: formatDate(w.dateOfBirth),
-    gender: w.gender ?? '',
-    visaDate: formatDate(w.visaDate),
-    jobTitle: w.jobTitle ?? '',
+    'Ad': ad,
+    'Soyad': soyad,
+    'TC Kimlik No': w.idNumber ?? '',
+    'Görevi': w.jobTitle ?? '',
+    'E-posta': w.email ?? '',
+    'Telefon': w.mobileNo ?? '',
+    'Doğum Tarihi': formatDate(w.dateOfBirth),
+    'İşe Giriş Tarihi': formatDate(w.employmentStartDate),
+    'Cinsiyet': w.gender ? (GENDER_TO_TURKISH[w.gender] ?? w.gender) : '',
+  };
+}
+
+/** Map a row with Turkish keys to internal keys using HEADER_MAPPING */
+function mapRowToInternalKeys(row: Record<string, unknown>): Record<string, string> {
+  const mapped: Record<string, string> = {};
+  for (const [turkishKey, internalKey] of Object.entries(HEADER_MAPPING)) {
+    const value = row[turkishKey];
+    if (value !== undefined && value !== null) {
+      mapped[internalKey] = String(value).trim();
+    }
+  }
+  return mapped;
+}
+
+const GENDER_NORMALIZE: Record<string, WorkerFormValues['gender']> = {
+  'erkek': 'male',
+  'kadın': 'female',
+  'kadin': 'female',
+  'diğer': 'other',
+  'diger': 'other',
+};
+
+/** Build WorkerFormValues from mapped row (internal keys) and optional companyId */
+function mappedRowToWorkerFormValues(mapped: Record<string, string>, companyId: string | null): WorkerFormValues {
+  const name = (mapped.name ?? '').trim();
+  const surname = (mapped.surname ?? '').trim();
+  const nameSurname = [name, surname].filter(Boolean).join(' ') || '';
+  const parseDate = (s: string): Date | undefined => {
+    if (!s) return undefined;
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? undefined : d;
+  };
+  const rawGender = (mapped.gender ?? '').trim().toLowerCase();
+  const gender = GENDER_NORMALIZE[rawGender] ?? (rawGender ? (rawGender as WorkerFormValues['gender']) : undefined);
+  return {
+    nameSurname,
+    idNumber: mapped.tcNo ?? '',
+    email: mapped.email ?? '',
+    jobTitle: mapped.jobTitle || undefined,
+    mobileNo: mapped.phone || undefined,
+    dateOfBirth: parseDate(mapped.birthDate),
+    employmentStartDate: parseDate(mapped.startDate),
+    gender,
+    companyId: companyId ?? undefined,
   };
 }
 
@@ -73,10 +140,13 @@ export function CompanyEmployeesPage() {
   const deleteWorker = useWorkerStore((state) => state.deleteWorker);
 
   const handleDownloadTemplate = () => {
-    exportTableToExcel<WorkerExportRow>(
-      workers.map(workerToExportRow),
-      [...SAMPLE_WORKER_COLUMNS],
-      'worker-template'
+    const rows: TurkishTemplateRow[] = workers.length > 0
+      ? workers.map(workerToTurkishTemplateRow)
+      : [TURKISH_TEMPLATE_COLUMNS.reduce((acc, col) => ({ ...acc, [col]: '' }), {} as TurkishTemplateRow)];
+    exportTableToExcel<TurkishTemplateRow>(
+      rows,
+      [...TURKISH_TEMPLATE_COLUMNS],
+      'calisan-sablonu'
     );
   };
 
@@ -115,6 +185,63 @@ export function CompanyEmployeesPage() {
     setEditingWorker(null);
   };
 
+  const handleImport = () => {
+    const file = uploadFile;
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
+
+        let addedCount = 0;
+        let skippedCount = 0;
+
+        jsonData.forEach((row) => {
+          const mapped = mapRowToInternalKeys(row);
+          const nameSurname = [mapped.name, mapped.surname].filter(Boolean).join(' ').trim();
+          const tcNo = (mapped.tcNo ?? '').trim();
+          if (!nameSurname || !tcNo) {
+            skippedCount++;
+            return;
+          }
+          const payload = mappedRowToWorkerFormValues(mapped, selectedCompanyId);
+          addWorker(payload);
+          addedCount++;
+        });
+
+        if (addedCount > 0) {
+          notifications.show({
+            title: 'İçe aktarma başarılı',
+            message: `${addedCount} çalışan eklendi.`,
+            color: 'green',
+          });
+        }
+        if (skippedCount > 0) {
+          notifications.show({
+            title: 'Atlanan satırlar',
+            message: `${skippedCount} satır Ad/Soyad veya TC Kimlik No eksik olduğu için atlandı.`,
+            color: 'yellow',
+          });
+        }
+        setUploadFile(null);
+      } catch (err) {
+        console.error('Excel import error:', err);
+        notifications.show({
+          title: 'İçe aktarma hatası',
+          message: 'Excel dosyası işlenirken bir hata oluştu.',
+          color: 'red',
+        });
+        setUploadFile(null);
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <>
       <Stack gap="md" mb="md">
@@ -136,15 +263,29 @@ export function CompanyEmployeesPage() {
         <Paper p="md" withBorder>
           <Stack gap="sm">
             <Text size="sm" fw={500}>{t('worker.uploadExcel')}</Text>
-            <Group align="flex-end">
-              <FileInput
-                placeholder={t('worker.uploadExcel')}
-                value={uploadFile}
-                onChange={setUploadFile}
-                accept=".xlsx,.xls"
-                clearable
-                style={{ minWidth: 220 }}
-              />
+            <Group align="center" gap="sm">
+              <FileButton onChange={setUploadFile} accept=".xlsx,.xls">
+                {(props) => (
+                  <Button
+                    {...props}
+                    variant="filled"
+                    color="green"
+                    leftSection={<IconUpload size={18} />}
+                  >
+                    {t('worker.uploadExcel')}
+                  </Button>
+                )}
+              </FileButton>
+              {uploadFile && (
+                <>
+                  <Badge variant="light" color="green" size="lg">
+                    {uploadFile.name}
+                  </Badge>
+                  <Button variant="light" color="green" onClick={handleImport}>
+                    Yükle / İçe Aktar
+                  </Button>
+                </>
+              )}
             </Group>
           </Stack>
         </Paper>

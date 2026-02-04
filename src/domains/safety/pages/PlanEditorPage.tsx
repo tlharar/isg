@@ -54,7 +54,11 @@ export function PlanEditorPage() {
   const [templateModalOpened, { open: openTemplateModal, close: closeTemplateModal }] = useDisclosure(false);
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
 
-  const templates = useMemo(() => getTemplatesForType(planType), [planType]);
+  const planTemplates = usePlanStore((s) => s.templates);
+  const templates = useMemo(
+    () => getTemplatesForType(planType, planType === 'WORK' ? planTemplates : undefined),
+    [planType, planTemplates]
+  );
   const title = PLAN_TYPE_LABELS[planType];
   const listPath = `/safety/plans/${planType.toLowerCase()}`;
 
