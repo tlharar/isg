@@ -7,9 +7,9 @@ interface RequireAdminProps {
 
 /** Renders children only if current user is ADMIN; otherwise redirects to dashboard. */
 export function RequireAdmin({ children }: RequireAdminProps) {
-  const userRole = useAuthStore((s) => s.user?.role);
+  const userRole = useAuthStore((s) => s.currentUser?.role);
 
-  if (userRole !== 'ADMIN') {
+  if (userRole !== 'Admin') {
     return <Navigate to="/dashboard" replace />;
   }
 

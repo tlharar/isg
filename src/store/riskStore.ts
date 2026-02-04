@@ -24,6 +24,7 @@ interface RiskState {
   updateRisk: (id: string, risk: Partial<Omit<RiskItem, 'id' | 'createdAt' | 'updatedAt'>>) => void;
   deleteRisk: (id: string) => void;
   getRiskById: (id: string) => RiskItem | undefined;
+  loadData: (isDemo: boolean) => void;
 }
 
 /**
@@ -89,6 +90,10 @@ export const useRiskStore = create<RiskState>()(
       },
       getRiskById: (id) => {
         return get().risks.find((risk) => risk.id === id);
+      },
+
+      loadData: (isDemo) => {
+        set({ risks: [] });
       },
     }),
     {

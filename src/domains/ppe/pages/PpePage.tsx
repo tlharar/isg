@@ -11,6 +11,7 @@ import {
   Menu,
   Modal,
   Select,
+  NumberInput,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
@@ -20,16 +21,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { usePpeStore, type PpeRecord } from '../stores/ppeStore';
 import { useWorkerStore } from '@store/workerStore';
 import { useAppStore } from '@shared/stores/appStore';
+import { useEquipmentStore } from '@store/equipmentStore';
+import { notifications } from '@mantine/notifications';
 
-const EQUIPMENT_OPTIONS = [
-  { value: 'Baret', label: 'Baret' },
-  { value: 'Çelik Burunlu Ayakkabı', label: 'Çelik Burunlu Ayakkabı' },
-  { value: 'Eldiven', label: 'Eldiven' },
-  { value: 'Gözlük', label: 'Gözlük' },
-  { value: 'Kulaklık', label: 'Kulaklık' },
-  { value: 'Maske', label: 'Maske' },
-  { value: 'Yelek', label: 'Yelek' },
-];
 
 function formatDate(iso: string): string {
   try {
@@ -47,6 +41,8 @@ export function PpePage() {
   const addRecord = usePpeStore((s) => s.addRecord);
   const updateRecord = usePpeStore((s) => s.updateRecord);
   const deleteRecord = usePpeStore((s) => s.deleteRecord);
+  const equipmentItems = useEquipmentStore((s) => s.items);
+  const decrementStock = useEquipmentStore((s) => s.decrementStock);
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -56,12 +52,27 @@ export function PpePage() {
     return list.map((w) => ({ value: w.id, label: `${w.nameSurname}${w.jobTitle ? ` - ${w.jobTitle}` : ''}` }));
   }, [workers, selectedCompanyId]);
 
+  const equipmentOptions = useMemo(() => {
+    let list = equipmentItems;
+    if (selectedCompanyId) list = list.filter((e) => e.companyId === selectedCompanyId);
+    return list.map((e) => ({ value: e.id, label: e.name }));
+  }, [equipmentItems, selectedCompanyId]);
+
   const editing = editingId ? records.find((r) => r.id === editingId) ?? null : null;
 
-  const { handleSubmit, setValue, watch, control, reset } = useForm<Omit<PpeRecord, 'id' | 'createdAt'>>({
+  type FormValues = {
+    employeeId: string;
+    equipmentId: string;
+    quantity: number;
+    dateGiven: string;
+    nextRenewalDate: string;
+  };
+
+  const { handleSubmit, setValue, watch, control, reset } = useForm<FormValues>({
     defaultValues: {
       employeeId: '',
-      equipment: 'Baret',
+      equipmentId: '',
+      quantity: 1,
       dateGiven: new Date().toISOString().slice(0, 10),
       nextRenewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     },
@@ -71,7 +82,8 @@ export function PpePage() {
     setEditingId(null);
     reset({
       employeeId: '',
-      equipment: 'Baret',
+      equipmentId: '',
+      quantity: 1,
       dateGiven: new Date().toISOString().slice(0, 10),
       nextRenewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     });
@@ -81,7 +93,9 @@ export function PpePage() {
   const handleEdit = (record: PpeRecord) => {
     setEditingId(record.id);
     setValue('employeeId', record.employeeId);
-    setValue('equipment', record.equipment);
+    const byName = equipmentItems.find((e) => e.name === record.equipment);
+    setValue('equipmentId', byName?.id ?? '');
+    setValue('quantity', 1);
     setValue('dateGiven', record.dateGiven);
     setValue('nextRenewalDate', record.nextRenewalDate);
     openModal();
@@ -92,14 +106,53 @@ export function PpePage() {
     setEditingId(null);
   };
 
-  const onSubmit = (data: Omit<PpeRecord, 'id' | 'createdAt'>) => {
+  const onSubmit = (data: FormValues) => {
     const dateGiven = typeof data.dateGiven === 'string' ? data.dateGiven : new Date(data.dateGiven).toISOString().slice(0, 10);
     const nextRenewalDate = typeof data.nextRenewalDate === 'string' ? data.nextRenewalDate : new Date(data.nextRenewalDate).toISOString().slice(0, 10);
-    const payload = { ...data, dateGiven, nextRenewalDate };
     if (editingId) {
-      updateRecord(editingId, payload);
+      const byId = equipmentItems.find((e) => e.id === data.equipmentId);
+      updateRecord(editingId, {
+        employeeId: data.employeeId,
+        equipment: byId?.name ?? data.equipmentId,
+        dateGiven,
+        nextRenewalDate,
+      });
     } else {
-      addRecord(payload);
+      const quantity = Number(data.quantity);
+      const validQty = Number.isFinite(quantity) && quantity >= 1 ? quantity : 1;
+      const items = useEquipmentStore.getState().items;
+      const freshItem = items.find((e) => e.id === data.equipmentId);
+      if (!freshItem) {
+        notifications.show({
+          title: 'Ekipman bulunamadı',
+          message: 'Seçilen ekipman envanterde bulunamadı. Lütfen listeden seçin.',
+          color: 'red',
+        });
+        return;
+      }
+      const currentStock = Number(freshItem.currentStock);
+      if (!Number.isFinite(currentStock) || currentStock < validQty) {
+        notifications.show({
+          title: 'Yetersiz stok',
+          message: `Yetersiz stok! ${freshItem.name} için kalan: ${currentStock}`,
+          color: 'red',
+        });
+        return;
+      }
+      decrementStock(freshItem.id, validQty);
+      for (let i = 0; i < validQty; i++) {
+        addRecord({
+          employeeId: data.employeeId,
+          equipment: freshItem.name,
+          dateGiven,
+          nextRenewalDate,
+        });
+      }
+      notifications.show({
+        title: 'Zimmet oluşturuldu',
+        message: `${freshItem.name} stoktan düşüldü ve kayıt eklendi.`,
+        color: 'green',
+      });
     }
     handleCloseModal();
   };
@@ -185,11 +238,23 @@ export function PpePage() {
             />
             <Select
               label={t('ppe.form.equipment')}
-              data={EQUIPMENT_OPTIONS}
-              value={watch('equipment')}
-              onChange={(v) => setValue('equipment', v ?? '')}
+              placeholder={t('ppe.form.equipmentPlaceholder')}
+              data={equipmentOptions}
+              value={watch('equipmentId') || null}
+              onChange={(v) => setValue('equipmentId', v ?? '')}
+              searchable
               required
+              disabled={!!editingId}
             />
+            {!editingId && (
+              <NumberInput
+                label={t('ppe.form.quantity')}
+                value={watch('quantity')}
+                onChange={(v) => setValue('quantity', typeof v === 'string' ? Number(v) || 1 : v ?? 1)}
+                min={1}
+                required
+              />
+            )}
             <Controller
               name="dateGiven"
               control={control}

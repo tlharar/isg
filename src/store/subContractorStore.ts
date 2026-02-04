@@ -31,25 +31,13 @@ export function getSubContractorStatus(contractEndDate: Date): SubContractorStat
   return new Date() > new Date(contractEndDate) ? 'Passive' : 'Active';
 }
 
-interface SubContractorState {
-  subContractors: SubContractor[];
-  addSubContractor: (data: Omit<SubContractor, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateSubContractor: (id: string, data: Partial<Omit<SubContractor, 'id' | 'createdAt' | 'updatedAt'>>) => void;
-  deleteSubContractor: (id: string) => void;
-  getSubContractorById: (id: string) => SubContractor | undefined;
-  fetchSubContractors: (mainCompanyId: string) => SubContractor[];
-}
-
-function generateId(): string {
-  return `sub-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
 const now = new Date();
 const lastYear = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
 const nextYear = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
 const nextMonth = new Date(now.getFullYear(), now.getMonth() + 2, now.getDate());
 
-const MOCK_SUBCONTRACTORS: SubContractor[] = [
+/** Kept outside store for reuse (e.g. loadData). */
+export const MOCK_SUBCONTRACTORS: SubContractor[] = [
   {
     id: 'sub-1',
     mainCompanyId: 'c1',
@@ -116,10 +104,24 @@ const MOCK_SUBCONTRACTORS: SubContractor[] = [
   },
 ];
 
+interface SubContractorState {
+  subContractors: SubContractor[];
+  addSubContractor: (data: Omit<SubContractor, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateSubContractor: (id: string, data: Partial<Omit<SubContractor, 'id' | 'createdAt' | 'updatedAt'>>) => void;
+  deleteSubContractor: (id: string) => void;
+  getSubContractorById: (id: string) => SubContractor | undefined;
+  fetchSubContractors: (mainCompanyId: string) => SubContractor[];
+  loadData: (isDemo: boolean) => void;
+}
+
+function generateId(): string {
+  return `sub-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export const useSubContractorStore = create<SubContractorState>()(
   persist(
     (set, get) => ({
-      subContractors: MOCK_SUBCONTRACTORS,
+      subContractors: [],
 
       addSubContractor: (data) => {
         const now_ = new Date();
@@ -153,6 +155,14 @@ export const useSubContractorStore = create<SubContractorState>()(
 
       fetchSubContractors: (mainCompanyId) => {
         return get().subContractors.filter((item) => item.mainCompanyId === mainCompanyId);
+      },
+
+      loadData: (isDemo) => {
+        if (isDemo) {
+          set({ subContractors: [...MOCK_SUBCONTRACTORS] });
+        } else {
+          set({ subContractors: [] });
+        }
       },
     }),
     { name: 'ohs-subcontractor-store' }

@@ -254,16 +254,21 @@ export const translations = {
         requiresAttention: 'Requires Attention',
         allClear: 'All Clear',
         lastAccident: 'Last Accident',
+        registeredCompanies: 'Registered companies',
+        registeredWorkers: 'Registered workers',
+        noAccidents: 'No accidents recorded',
       },
       criticalActions: {
         title: 'Upcoming Processes & Alerts',
         viewAll: 'View All Actions',
+        empty: 'No upcoming items in the next 15 days.',
       },
       charts: {
         riskDistribution: 'Risk Distribution',
         dofStatus: 'DOF Status (Last 6 Months)',
         openDof: 'Open',
         closedDof: 'Closed',
+        noRiskData: 'No risk data yet. Add risks to see distribution.',
       },
       quickActions: {
         title: 'Quick Actions',
@@ -1041,16 +1046,21 @@ export const translations = {
         requiresAttention: 'Dikkat Gerekiyor',
         allClear: 'Sorun Yok',
         lastAccident: 'Son Kaza',
+        registeredCompanies: 'Kayıtlı firma',
+        registeredWorkers: 'Kayıtlı çalışan',
+        noAccidents: 'Kayıtlı kaza yok',
       },
       criticalActions: {
         title: 'Yaklaşan Süreçler & Uyarılar',
         viewAll: 'Tümünü Görüntüle',
+        empty: 'Önümüzdeki 15 günde yaklaşan kayıt yok.',
       },
       charts: {
         riskDistribution: 'Risk Dağılımı',
         dofStatus: 'DÖF Durumu (Son 6 Ay)',
         openDof: 'Açık',
         closedDof: 'Kapalı',
+        noRiskData: 'Henüz risk verisi yok. Dağılım için risk ekleyin.',
       },
       quickActions: {
         title: 'Hızlı İşlemler',

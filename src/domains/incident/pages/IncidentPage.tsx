@@ -47,7 +47,14 @@ function getTypeBadgeColor(type: IncidentType): string {
   return type === 'İş Kazası' ? 'red' : 'orange';
 }
 
-export function IncidentPage() {
+export type IncidentPageFilterType = 'İş Kazası' | 'Ramak Kala';
+
+export interface IncidentPageProps {
+  /** When set, only incidents of this type are shown and type is fixed in the modal for new items */
+  filterType?: IncidentPageFilterType;
+}
+
+export function IncidentPage({ filterType: filterTypeProp }: IncidentPageProps = {}) {
   const { t } = useTranslation();
   const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
   const workers = useWorkerStore((s) => s.workers);
@@ -59,6 +66,7 @@ export function IncidentPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
+  const typeLocked = !!filterTypeProp;
 
   const employeeOptions = useMemo(() => {
     let list = workers;
@@ -85,16 +93,18 @@ export function IncidentPage() {
 
   const filteredIncidents = useMemo(() => {
     return incidents.filter((i) => {
-      if (filterType && i.type !== filterType) return false;
+      if (filterTypeProp && i.type !== filterTypeProp) return false;
+      if (!filterTypeProp && filterType && i.type !== filterType) return false;
       if (filterStatus && i.status !== filterStatus) return false;
       return true;
     });
-  }, [incidents, filterType, filterStatus]);
+  }, [incidents, filterTypeProp, filterType, filterStatus]);
 
   const handleAdd = () => {
     setEditingId(null);
+    const defaultType = filterTypeProp ?? 'İş Kazası';
     reset({
-      type: 'İş Kazası',
+      type: defaultType,
       employeeId: '',
       date: new Date().toISOString().slice(0, 10),
       location: '',
@@ -141,13 +151,27 @@ export function IncidentPage() {
     if (window.confirm(t('incident.deleteConfirm'))) deleteIncident(incident.id);
   };
 
+  const pageTitle =
+    filterTypeProp === 'İş Kazası'
+      ? 'İş Kazası Listesi'
+      : filterTypeProp === 'Ramak Kala'
+        ? 'Ramak Kala Kayıtları'
+        : t('incident.title');
+
+  const pageSubtitle =
+    filterTypeProp === 'İş Kazası'
+      ? 'İş kazası kayıtlarını görüntüleyin ve yönetin.'
+      : filterTypeProp === 'Ramak Kala'
+        ? 'Ramak kala olay kayıtlarını görüntüleyin ve yönetin.'
+        : t('incident.subtitle');
+
   return (
     <>
       <Stack gap="md">
         <Group justify="space-between">
           <div>
-            <Title order={2}>{t('incident.title')}</Title>
-            <Text c="dimmed" size="sm">{t('incident.subtitle')}</Text>
+            <Title order={2}>{pageTitle}</Title>
+            <Text c="dimmed" size="sm">{pageSubtitle}</Text>
           </div>
           <Button leftSection={<IconPlus size={16} />} onClick={handleAdd}>
             {t('incident.addIncident')}
@@ -158,15 +182,17 @@ export function IncidentPage() {
           <Stack gap="sm">
             <Text size="sm" fw={500}>{t('incident.filters')}</Text>
             <Group>
-              <Select
-                size="xs"
-                label={t('incident.filterType')}
-                data={[{ value: '', label: t('incident.filterAll') }, ...TYPE_OPTIONS]}
-                value={filterType}
-                onChange={(v) => setFilterType(v ?? '')}
-                clearable
-                style={{ minWidth: 140 }}
-              />
+              {!typeLocked && (
+                <Select
+                  size="xs"
+                  label={t('incident.filterType')}
+                  data={[{ value: '', label: t('incident.filterAll') }, ...TYPE_OPTIONS]}
+                  value={filterType}
+                  onChange={(v) => setFilterType(v ?? '')}
+                  clearable
+                  style={{ minWidth: 140 }}
+                />
+              )}
               <Select
                 size="xs"
                 label={t('incident.filterStatus')}
@@ -186,7 +212,7 @@ export function IncidentPage() {
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>{t('incident.table.dateTime')}</Table.Th>
-                  <Table.Th>{t('incident.table.type')}</Table.Th>
+                  {!typeLocked && <Table.Th>{t('incident.table.type')}</Table.Th>}
                   <Table.Th>{t('incident.table.employee')}</Table.Th>
                   <Table.Th>{t('incident.table.location')}</Table.Th>
                   <Table.Th>{t('incident.table.status')}</Table.Th>
@@ -199,9 +225,11 @@ export function IncidentPage() {
                   return (
                     <Table.Tr key={i.id}>
                       <Table.Td>{i.date}</Table.Td>
-                      <Table.Td>
-                        <Badge color={getTypeBadgeColor(i.type)} size="sm">{i.type}</Badge>
-                      </Table.Td>
+                      {!typeLocked && (
+                        <Table.Td>
+                          <Badge color={getTypeBadgeColor(i.type)} size="sm">{i.type}</Badge>
+                        </Table.Td>
+                      )}
                       <Table.Td>{worker?.nameSurname ?? i.employeeId}</Table.Td>
                       <Table.Td>{i.location}</Table.Td>
                       <Table.Td>
@@ -245,6 +273,8 @@ export function IncidentPage() {
               value={watch('type')}
               onChange={(v) => setValue('type', (v as IncidentType) ?? 'İş Kazası')}
               required
+              disabled={typeLocked}
+              description={typeLocked ? 'Bu sayfa yalnızca bu tür kayıtlar içindir.' : undefined}
             />
             <Select
               label={t('incident.form.employee')}

@@ -23,7 +23,8 @@ function generateId(): string {
   return `inc-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-const INITIAL_INCIDENTS: Incident[] = [
+/** Kept outside store for reuse (e.g. loadData). */
+const MOCK_INCIDENTS: Incident[] = [
   {
     id: 'inc1',
     type: 'İş Kazası',
@@ -57,12 +58,13 @@ interface IncidentState {
   deleteIncident: (id: string) => void;
   getIncidentById: (id: string) => Incident | undefined;
   getIncidentsByEmployee: (employeeId: string) => Incident[];
+  loadData: (isDemo: boolean) => void;
 }
 
 export const useIncidentStore = create<IncidentState>()(
   persist(
     (set, get) => ({
-      incidents: INITIAL_INCIDENTS,
+      incidents: MOCK_INCIDENTS,
 
       addIncident: (data) => {
         const now = new Date().toISOString();
@@ -91,6 +93,14 @@ export const useIncidentStore = create<IncidentState>()(
 
       getIncidentsByEmployee: (employeeId) =>
         get().incidents.filter((i) => i.employeeId === employeeId),
+
+      loadData: (isDemo) => {
+        if (isDemo) {
+          set({ incidents: [...MOCK_INCIDENTS] });
+        } else {
+          set({ incidents: [] });
+        }
+      },
     }),
     { name: 'ohs-incidents', partialize: (s) => ({ incidents: s.incidents }) }
   )

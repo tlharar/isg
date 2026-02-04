@@ -6,7 +6,8 @@ export interface Worker extends WorkerFormValues {
   id: string;
 }
 
-const INITIAL_WORKERS: Worker[] = [
+/** Kept outside store for reuse (e.g. loadData). */
+const MOCK_WORKERS: Worker[] = [
   { id: '1', nameSurname: 'Ahmet Yılmaz', idNumber: '12345678901', email: 'ahmet@example.com', jobTitle: 'Technician', companyId: 'c1' },
   { id: '2', nameSurname: 'Ayşe Demir', idNumber: '98765432109', email: 'ayse@example.com', jobTitle: 'Engineer', companyId: 'c2' },
 ];
@@ -21,12 +22,13 @@ interface WorkerState {
   updateWorker: (id: string, data: WorkerFormValues) => void;
   deleteWorker: (id: string) => void;
   getWorkerById: (id: string) => Worker | undefined;
+  loadData: (isDemo: boolean) => void;
 }
 
 export const useWorkerStore = create<WorkerState>()(
   persist(
     (set, get) => ({
-      workers: INITIAL_WORKERS,
+      workers: [],
 
       addWorker: (data: WorkerFormValues) => {
         const worker: Worker = { ...data, id: generateId() };
@@ -47,6 +49,14 @@ export const useWorkerStore = create<WorkerState>()(
       },
 
       getWorkerById: (id: string) => get().workers.find((w) => w.id === id),
+
+      loadData: (isDemo) => {
+        if (isDemo) {
+          set({ workers: [...MOCK_WORKERS] });
+        } else {
+          set({ workers: [] });
+        }
+      },
     }),
     {
       name: 'ohs-workers',

@@ -41,7 +41,8 @@ function generateId(): string {
 
 export type { CompanyFormValues };
 
-const INITIAL_COMPANIES: Company[] = [
+/** Kept outside store for reuse (e.g. loadData). */
+const MOCK_COMPANIES: Company[] = [
   {
     id: 'c1',
     name: 'Company A',
@@ -105,12 +106,13 @@ interface CompanyState {
   updateCompany: (id: string, data: CompanyFormValues) => void;
   deleteCompany: (id: string) => void;
   getCompanyById: (id: string) => Company | undefined;
+  loadData: (isDemo: boolean) => void;
 }
 
 export const useCompanyStore = create<CompanyState>()(
   persist(
     (set, get) => ({
-      companies: INITIAL_COMPANIES,
+      companies: [],
 
       addCompany: (data: CompanyFormValues) => {
         const company: Company = {
@@ -146,6 +148,11 @@ export const useCompanyStore = create<CompanyState>()(
       },
 
       getCompanyById: (id: string) => get().companies.find((c) => c.id === id),
+
+      loadData: (isDemo) => {
+        if (isDemo) set({ companies: [...MOCK_COMPANIES] });
+        else set({ companies: [] });
+      },
     }),
     { name: 'ohs-companies', partialize: (state) => ({ companies: state.companies }) }
   )

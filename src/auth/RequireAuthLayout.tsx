@@ -3,7 +3,7 @@ import { useAuthStore } from '@shared/stores/authStore';
 import { ShellLayout } from '@shell/layout/ShellLayout';
 
 export function RequireAuthLayout() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthenticated = useAuthStore((s) => s.currentUser != null);
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Text, TextInput, PasswordInput, Button, Stack, Paper, Group } from '@mantine/core';
 import { useTranslation } from '@shared/i18n';
 import { useAuthStore } from '@shared/stores/authStore';
+import { initializeUserData } from '@shared/dataManager';
 
 /** Brand colors for ÖZARTEK dual-tone text (matches ShellHeader) */
 const BRAND_TURQUOISE = '#00C2CB';
@@ -12,14 +13,16 @@ export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (login(username.trim(), password)) {
+    const user = login(email.trim(), password);
+    if (user) {
+      initializeUserData(user.role);
       navigate('/dashboard');
     } else {
       setError(t('login.invalidCredentials'));
@@ -71,9 +74,9 @@ export function LoginPage() {
           <Stack gap="md">
             <TextInput
               label={t('login.username')}
-              placeholder={t('login.username')}
-              value={username}
-              onChange={(e) => setUsername(e.currentTarget.value)}
+              placeholder="ornek@firma.com"
+              value={email}
+              onChange={(e) => setEmail(e.currentTarget.value)}
               required
               autoComplete="username"
             />

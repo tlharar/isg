@@ -3,7 +3,7 @@ import { useAuthStore } from '@shared/stores/authStore';
 import { LoginPage } from '@pages/LoginPage';
 
 export function LoginOrRedirect() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthenticated = useAuthStore((s) => s.currentUser != null);
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;

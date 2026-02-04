@@ -36,10 +36,10 @@ import { useAppStore } from '@shared/stores/appStore';
 import { useAuthStore, type UserRole } from '@shared/stores/authStore';
 import { useCompanyStore } from '@store/companyStore';
 
-const ALL_ROLES: UserRole[] = ['ADMIN', 'DOCTOR', 'SPECIALIST', 'GENERAL'];
-const SAFETY_ROLES: UserRole[] = ['ADMIN', 'SPECIALIST', 'GENERAL'];
-const HEALTH_ROLES: UserRole[] = ['ADMIN', 'DOCTOR', 'GENERAL'];
-const ADMIN_ONLY: UserRole[] = ['ADMIN'];
+const ALL_ROLES: UserRole[] = ['Admin', 'Hekim', 'IsgUzman', 'GenelKullanici', 'DemoHekim', 'DemoUzman', 'DemoGenel'];
+const SAFETY_ROLES: UserRole[] = ['Admin', 'IsgUzman', 'GenelKullanici', 'DemoUzman', 'DemoGenel'];
+const HEALTH_ROLES: UserRole[] = ['Admin', 'Hekim', 'GenelKullanici', 'DemoHekim', 'DemoGenel'];
+const ADMIN_ONLY: UserRole[] = ['Admin'];
 
 function canAccess(userRole: UserRole | undefined, allowedRoles: UserRole[]): boolean {
   if (!userRole) return false;
@@ -238,7 +238,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
   const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
   const setSelectedCompanyId = useAppStore((s) => s.setSelectedCompanyId);
   const companies = useCompanyStore((s) => s.companies);
-  const userRole = useAuthStore((s) => s.user?.role);
+  const userRole = useAuthStore((s) => s.currentUser?.role);
   const isMobile = useMediaQuery('(max-width: 47.99em)');
 
   const isCompanyPath = location.pathname.startsWith('/company');

@@ -25,10 +25,11 @@ interface EducationState {
   updateSession: (id: string, session: Partial<Omit<EducationSession, 'id' | 'createdAt' | 'updatedAt'>>) => void;
   deleteSession: (id: string) => void;
   getSessionById: (id: string) => EducationSession | undefined;
+  loadData: (isDemo: boolean) => void;
 }
 
-// Mock data for initial sessions
-const mockSessions: EducationSession[] = [
+/** Kept outside store for reuse (e.g. loadData). */
+const MOCK_SESSIONS: EducationSession[] = [
   {
     id: 'edu-1',
     title: 'Temel İSG Eğitimi',
@@ -118,7 +119,7 @@ const mockSessions: EducationSession[] = [
 export const useEducationStore = create<EducationState>()(
   persist(
     (set, get) => ({
-      sessions: mockSessions,
+      sessions: [],
       addSession: (session) => {
         const now = new Date();
         const newSession: EducationSession = {
@@ -145,6 +146,11 @@ export const useEducationStore = create<EducationState>()(
       },
       getSessionById: (id) => {
         return get().sessions.find((session) => session.id === id);
+      },
+
+      loadData: (isDemo) => {
+        if (isDemo) set({ sessions: [...MOCK_SESSIONS] });
+        else set({ sessions: [] });
       },
     }),
     {
