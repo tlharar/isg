@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { AppShell, Box, Group, Text } from '@mantine/core';
+import { AppShell, Box, Group, Text, UnstyledButton } from '@mantine/core';
 import { NavContent } from '../nav/NavContent';
 
 interface ShellSidebarProps {
@@ -25,46 +25,38 @@ export function ShellSidebar({ onCloseMobileNav }: ShellSidebarProps) {
       }}
     >
       {/* Logo / Brand at top */}
-      <Group
+      <UnstyledButton
         component={Link}
         to="/"
-        h={60}
-        px="md"
-        wrap="nowrap"
-        gap={6}
-        style={{
-          flexShrink: 0,
-          textDecoration: 'none',
-          cursor: 'pointer',
-          color: 'var(--sidebar-text)',
-          minWidth: 0,
-        }}
+        style={{ display: 'block', textDecoration: 'none', color: 'inherit', flexShrink: 0 }}
         aria-label="Özartek"
       >
-        <img
-          src="/logo.png"
-          alt="Özartek Logo"
-          height={36}
-          style={{ display: 'block', flexShrink: 0, width: 'auto' }}
-        />
-        <Text
-          component="span"
-          fw={700}
-          style={{
-            fontFamily: "'Inter', system-ui, sans-serif",
-            fontSize: 'var(--mantine-h4-font-size)',
-            lineHeight: 1.2,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            textTransform: 'uppercase',
-            letterSpacing: '0.02em',
-            color: 'var(--sidebar-text)',
-          }}
-        >
-          ÖZARTEK
-        </Text>
-      </Group>
+        <Group h={60} px="md" wrap="nowrap" gap={6} style={{ minWidth: 0, color: 'var(--sidebar-text)' }}>
+          <img
+            src="/logo.png"
+            alt="Özartek Logo"
+            height={36}
+            style={{ display: 'block', flexShrink: 0, width: 'auto' }}
+          />
+          <Text
+            component="span"
+            fw={700}
+            style={{
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontSize: 'var(--mantine-h4-font-size)',
+              lineHeight: 1.2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+              color: 'var(--sidebar-text)',
+            }}
+          >
+            ÖZARTEK
+          </Text>
+        </Group>
+      </UnstyledButton>
 
       <Box
         style={{

@@ -606,15 +606,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                 <UnstyledButton
                   component={Link}
                   to="/settings"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    ...sectionButtonStyle(isSettingsPath),
-                  }}
+                  style={sectionButtonStyle(isSettingsPath)}
                 >
                   <IconSettings size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span>{t('nav.userManagement')}</span>
