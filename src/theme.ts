@@ -1,4 +1,4 @@
-import { MantineColorsTuple, createTheme, rem } from '@mantine/core';
+import { MantineColorsTuple, createTheme, rem, type CSSVariablesResolver } from '@mantine/core';
 
 /** Vibrant Turquoise/Cyan brand color - #00C2CB as main (index 6), readable on light and dark */
 const turquoise: MantineColorsTuple = [
@@ -13,6 +13,25 @@ const turquoise: MantineColorsTuple = [
   '#007e85',
   '#005c62',
 ];
+
+/** Dark Sidebar & Light Content: sidebar and app background/text variables */
+export const cssVariablesResolver: CSSVariablesResolver = () => ({
+  variables: {},
+  light: {
+    '--sidebar-bg': '#111827',
+    '--sidebar-text': '#ffffff',
+    '--app-bg': '#f3f4f6',
+    '--app-background': '#f3f4f6',
+    '--sidebar-background': '#111827',
+  },
+  dark: {
+    '--sidebar-bg': 'var(--mantine-color-dark-8)',
+    '--sidebar-text': '#e5e7eb',
+    '--app-bg': 'var(--mantine-color-dark-8)',
+    '--app-background': 'var(--mantine-color-dark-8)',
+    '--sidebar-background': 'var(--mantine-color-dark-9)',
+  },
+});
 
 export const theme = createTheme({
   primaryColor: 'cyan',
@@ -34,6 +53,11 @@ export const theme = createTheme({
     xl: rem(16),
   },
   components: {
+    AppShell: {
+      defaultProps: {
+        layout: 'alt',
+      },
+    },
     Button: {
       defaultProps: {
         radius: 'md',
@@ -48,14 +72,14 @@ export const theme = createTheme({
     Paper: {
       defaultProps: {
         withBorder: true,
-        shadow: 'xs',
+        shadow: 'sm',
         radius: 'md',
       },
     },
     Card: {
       defaultProps: {
         withBorder: true,
-        shadow: 'xs',
+        shadow: 'sm',
         radius: 'md',
       },
     },

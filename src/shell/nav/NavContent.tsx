@@ -202,7 +202,7 @@ function renderSubGroupLinks(
 ) {
   return subGroups.map((group) => (
     <Box key={group.sectionLabelKey} mb="xs">
-      <Text size="xs" fw={600} c="dimmed" mb={4} pl={8}>
+      <Text size="xs" fw={600} mb={4} pl={8} style={{ color: 'rgba(255,255,255,0.6)' }}>
         {t(group.sectionLabelKey)}
       </Text>
       <Stack gap={2}>
@@ -284,15 +284,26 @@ export function NavContent({ onNavigate }: NavContentProps) {
     padding: '6px 12px',
     paddingLeft: 36,
     borderRadius: 'var(--mantine-radius-sm)',
-    fontWeight: 500,
+    fontWeight: isActive ? 700 : 500,
     fontSize: 'var(--mantine-font-size-sm)',
-    backgroundColor: isActive ? 'var(--mantine-primary-light)' : 'transparent',
-    color: isActive ? 'var(--mantine-primary-light-color)' : 'var(--mantine-color-text)',
+    backgroundColor: isActive ? 'var(--mantine-color-cyan-9)' : 'transparent',
+    color: isActive ? '#ffffff' : 'var(--sidebar-text)',
   });
 
   const nestedLinkStyle = (isActive: boolean) => ({
     ...linkStyle(isActive),
     paddingLeft: 24,
+  });
+
+  const sectionButtonStyle = (isActive: boolean) => ({
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    padding: '8px 12px',
+    borderRadius: 'var(--mantine-radius-sm)',
+    fontWeight: isActive ? 700 : 500,
+    backgroundColor: isActive ? 'var(--mantine-color-cyan-9)' : 'transparent',
+    color: isActive ? '#ffffff' : 'var(--sidebar-text)',
   });
 
   const companyOptions = [
@@ -315,10 +326,11 @@ export function NavContent({ onNavigate }: NavContentProps) {
           p="sm"
           style={{
             flex: '0 0 auto',
-            borderBottom: '1px solid var(--mantine-color-default-border)',
+            borderBottom: '1px solid rgba(255,255,255,0.12)',
+            color: 'var(--sidebar-text)',
           }}
         >
-          <Text fw={500} size="xs" c="dimmed" mb="xs">
+          <Text fw={500} size="xs" mb="xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
             {t('common.company')}
           </Text>
           <Select
@@ -343,11 +355,11 @@ export function NavContent({ onNavigate }: NavContentProps) {
           minHeight: 0,
         }}
       >
-        <Box p="sm" pb="md">
-          <Text fw={600} size="sm" c="dimmed" px="xs" mb="xs">
+        <Box p="sm" pb="md" style={{ color: 'var(--sidebar-text)' }}>
+          <Text fw={600} size="sm" px="xs" mb="xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
             {t('nav.modules')}
           </Text>
-          <Divider mb="sm" />
+          <Divider mb="sm" color="rgba(255,255,255,0.12)" />
           <Stack gap={2}>
             {/* Main nav items - filtered by role */}
             {mainNavItems
@@ -357,20 +369,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                   <UnstyledButton
                     key={to}
                     onClick={() => handleNavClick(to)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: 'var(--mantine-radius-sm)',
-                      fontWeight: 500,
-                      backgroundColor:
-                        location.pathname === to ? 'var(--mantine-primary-light)' : 'transparent',
-                      color:
-                        location.pathname === to
-                          ? 'var(--mantine-primary-light-color)'
-                          : 'var(--mantine-color-text)',
-                    }}
+                    style={sectionButtonStyle(location.pathname === to)}
                   >
                     <Icon size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                     <span>{t(labelKey)}</span>
@@ -380,20 +379,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                     key={to}
                     component={Link}
                     to={to}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: 'var(--mantine-radius-sm)',
-                      fontWeight: 500,
-                      backgroundColor:
-                        location.pathname === to ? 'var(--mantine-primary-light)' : 'transparent',
-                      color:
-                        location.pathname === to
-                          ? 'var(--mantine-primary-light-color)'
-                          : 'var(--mantine-color-text)',
-                    }}
+                    style={sectionButtonStyle(location.pathname === to)}
                   >
                     <Icon size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                     <span>{t(labelKey)}</span>
@@ -406,18 +392,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
               <Box>
                 <UnstyledButton
                   onClick={toggleCompany}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    backgroundColor: isCompanyPath ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: isCompanyPath
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
-                  }}
+                  style={sectionButtonStyle(isCompanyPath)}
                 >
                   <IconBuilding size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span style={{ flex: 1, textAlign: 'left' }}>{t('nav.company')}</span>
@@ -432,7 +407,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                     gap={2}
                     py="xs"
                     pl="xs"
-                    style={{ borderLeft: '2px solid var(--mantine-color-default-border)', marginLeft: 8 }}
+                    style={{ borderLeft: '2px solid rgba(255,255,255,0.2)', marginLeft: 8 }}
                   >
                     {companySubItems.map(({ to, labelKey, icon: Icon }) => {
                       const active =
@@ -461,18 +436,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
               <Box>
                 <UnstyledButton
                   onClick={toggleSafety}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    backgroundColor: isSafetyPath ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: isSafetyPath
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
-                  }}
+                  style={sectionButtonStyle(isSafetyPath)}
                 >
                   <IconShield size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span style={{ flex: 1, textAlign: 'left' }}>{t('nav.safety')}</span>
@@ -487,7 +451,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                     gap={2}
                     py="xs"
                     pl="xs"
-                    style={{ borderLeft: '2px solid var(--mantine-color-default-border)', marginLeft: 8 }}
+                    style={{ borderLeft: '2px solid rgba(255,255,255,0.2)', marginLeft: 8 }}
                   >
                     {renderSubGroupLinks(
                       safetySubGroups,
@@ -507,18 +471,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
               <Box>
                 <UnstyledButton
                   onClick={toggleHealth}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    backgroundColor: isHealthPath ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: isHealthPath
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
-                  }}
+                  style={sectionButtonStyle(isHealthPath)}
                 >
                   <IconHeartbeat size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span style={{ flex: 1, textAlign: 'left' }}>{t('nav.health')}</span>
@@ -533,7 +486,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                     gap={2}
                     py="xs"
                     pl="xs"
-                    style={{ borderLeft: '2px solid var(--mantine-color-default-border)', marginLeft: 8 }}
+                    style={{ borderLeft: '2px solid rgba(255,255,255,0.2)', marginLeft: 8 }}
                   >
                     {renderSubGroupLinks(
                       healthSubGroups,
@@ -553,18 +506,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
               <Box>
                 <UnstyledButton
                   onClick={toggleArchive}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    backgroundColor: isArchivePath ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: isArchivePath
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
-                  }}
+                  style={sectionButtonStyle(isArchivePath)}
                 >
                   <IconArchive size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span style={{ flex: 1, textAlign: 'left' }}>{t('nav.archive')}</span>
@@ -579,7 +521,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                     gap={2}
                     py="xs"
                     pl="xs"
-                    style={{ borderLeft: '2px solid var(--mantine-color-default-border)', marginLeft: 8 }}
+                    style={{ borderLeft: '2px solid rgba(255,255,255,0.2)', marginLeft: 8 }}
                   >
                     {renderSubGroupLinks(
                       archiveSubGroups,
@@ -599,18 +541,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
               <Box>
                 <UnstyledButton
                   onClick={toggleExtra}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    backgroundColor: isExtraPath ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: isExtraPath
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
-                  }}
+                  style={sectionButtonStyle(isExtraPath)}
                 >
                   <IconPuzzle size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span style={{ flex: 1, textAlign: 'left' }}>{t('nav.extra')}</span>
@@ -625,7 +556,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                     gap={2}
                     py="xs"
                     pl="xs"
-                    style={{ borderLeft: '2px solid var(--mantine-color-default-border)', marginLeft: 8 }}
+                    style={{ borderLeft: '2px solid rgba(255,255,255,0.2)', marginLeft: 8 }}
                   >
                     {renderSubGroupLinks(
                       extraSubGroups,
@@ -645,18 +576,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
               (useClickHandler ? (
                 <UnstyledButton
                   onClick={() => handleNavClick('/crm/leads')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    backgroundColor: location.pathname.startsWith('/crm') ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: location.pathname.startsWith('/crm')
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
-                  }}
+                  style={sectionButtonStyle(location.pathname.startsWith('/crm'))}
                 >
                   <IconBriefcase size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span>{t('nav.crm')}</span>
@@ -665,18 +585,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                 <UnstyledButton
                   component={Link}
                   to="/crm/leads"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    backgroundColor: location.pathname.startsWith('/crm') ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: location.pathname.startsWith('/crm')
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
-                  }}
+                  style={sectionButtonStyle(location.pathname.startsWith('/crm'))}
                 >
                   <IconBriefcase size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span>{t('nav.crm')}</span>
@@ -688,18 +597,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
               (useClickHandler ? (
                 <UnstyledButton
                   onClick={() => handleNavClick('/settings')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    fontWeight: 500,
-                    backgroundColor: isSettingsPath ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: isSettingsPath
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
-                  }}
+                  style={sectionButtonStyle(isSettingsPath)}
                 >
                   <IconSettings size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
                   <span>{t('nav.userManagement')}</span>
@@ -715,10 +613,7 @@ export function NavContent({ onNavigate }: NavContentProps) {
                     padding: '8px 12px',
                     borderRadius: 'var(--mantine-radius-sm)',
                     fontWeight: 500,
-                    backgroundColor: isSettingsPath ? 'var(--mantine-primary-light)' : 'transparent',
-                    color: isSettingsPath
-                      ? 'var(--mantine-primary-light-color)'
-                      : 'var(--mantine-color-text)',
+                    ...sectionButtonStyle(isSettingsPath),
                   }}
                 >
                   <IconSettings size={20} stroke={1.5} style={{ marginRight: 12, flexShrink: 0 }} />
@@ -734,10 +629,11 @@ export function NavContent({ onNavigate }: NavContentProps) {
         p="sm"
         style={{
           flex: '0 0 auto',
-          borderTop: '1px solid var(--mantine-color-default-border)',
+          borderTop: '1px solid rgba(255,255,255,0.12)',
+          color: 'var(--sidebar-text)',
         }}
       >
-        <Text fw={500} size="xs" c="dimmed" mb="xs">
+        <Text fw={500} size="xs" mb="xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
           {t('common.language')}
         </Text>
         <SegmentedControl
@@ -750,6 +646,8 @@ export function NavContent({ onNavigate }: NavContentProps) {
           ]}
           aria-label={t('common.language')}
           fullWidth
+          color="dark"
+          variant="filled"
         />
       </Box>
     </Box>

@@ -7,7 +7,6 @@ import {
   Burger,
   SegmentedControl,
   Select,
-  Text,
   Menu,
   Button,
   Avatar,
@@ -21,10 +20,6 @@ import { useTranslation } from '@shared/i18n';
 import { useCompanyStore } from '@store/companyStore';
 import { AccountSettingsModal } from './AccountSettingsModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
-
-/** Brand colors for ÖZARTEK dual-tone text */
-const BRAND_TURQUOISE = '#00C2CB';
-const BRAND_TEAL = '#006064';
 
 function getInitials(firstName: string, lastName: string, email: string): string {
   const first = (firstName || '').trim().charAt(0);
@@ -71,8 +66,13 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
 
   return (
     <>
-      <AppShell.Header>
-        <Group h="100%" px="sm" justify="space-between" wrap="nowrap" gap="xs">
+      <AppShell.Header
+        style={{
+          backgroundColor: '#ffffff',
+          borderBottom: '1px solid var(--mantine-color-gray-2)',
+        }}
+      >
+        <Group h="100%" px="sm" justify="space-between" wrap="nowrap" gap="xs" style={{ position: 'relative' }}>
           <Group wrap="nowrap" gap="xs" style={{ minWidth: 0 }}>
             <Burger
               opened={mobileMenuOpened}
@@ -81,47 +81,26 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
               size="sm"
               aria-label={t('common.menu')}
             />
-            <Link
-              to="/"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                textDecoration: 'none',
-                cursor: 'pointer',
-              }}
-              aria-label={t('appTitle')}
-            >
-              <Group wrap="nowrap" gap={6} style={{ minWidth: 0 }}>
-                <img
-                  src="/logo.png"
-                  alt="Özartek Logo"
-                  height={50}
-                  style={{ display: 'block', flexShrink: 0, width: 'auto' }}
-                />
-                <Text
-                  component="span"
-                  fw={700}
-                  style={{
-                    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-                    fontSize: 'var(--mantine-h4-font-size)',
-                    lineHeight: 1.2,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  <Text component="span" inherit style={{ color: BRAND_TURQUOISE }}>
-                    ÖZAR
-                  </Text>
-                  <Text component="span" inherit style={{ color: BRAND_TEAL }}>
-                    TEK
-                  </Text>
-                </Text>
-              </Group>
-            </Link>
           </Group>
+          <Box
+            hiddenFrom="sm"
+            style={{
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Link to="/" style={{ display: 'flex', alignItems: 'center' }} aria-label="Özartek">
+              <img
+                src="/logo.png"
+                alt="Özartek Logo"
+                height={36}
+                style={{ display: 'block', width: 'auto' }}
+              />
+            </Link>
+          </Box>
           <Group gap="xs" wrap="nowrap">
             <Select
               size="xs"
@@ -151,6 +130,7 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
               size="lg"
               onClick={() => toggleColorScheme()}
               aria-label={t('common.themeToggle')}
+              visibleFrom="sm"
             >
               {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
             </ActionIcon>

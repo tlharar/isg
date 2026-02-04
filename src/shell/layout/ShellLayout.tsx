@@ -29,14 +29,14 @@ export function ShellLayout() {
       padding={{ base: 'sm', sm: 'md' }}
       styles={{
         root: {
-          backgroundColor: 'var(--app-background)',
+          backgroundColor: 'var(--app-bg)',
         },
         main: {
-          backgroundColor: 'var(--app-background)',
+          backgroundColor: 'var(--app-bg)',
         },
         navbar: {
-          backgroundColor: 'var(--sidebar-background)',
-          borderRight: '1px solid var(--mantine-color-default-border)',
+          backgroundColor: 'var(--sidebar-bg)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.08)',
         },
       }}
     >
