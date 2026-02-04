@@ -58,7 +58,7 @@ export function PrescriptionListPage() {
     openDetail();
   };
 
-  const handlePrint = (p: Prescription) => {
+  const handlePrint = () => {
     notifications.show({
       title: 'Yazdır',
       message: 'Reçete PDF olarak hazırlanıyor...',
@@ -159,7 +159,7 @@ export function PrescriptionListPage() {
                           <ActionIcon
                             variant="subtle"
                             size="sm"
-                            onClick={() => handlePrint(p)}
+                            onClick={handlePrint}
                             aria-label="Yazdır"
                           >
                             <IconPrinter size={16} />

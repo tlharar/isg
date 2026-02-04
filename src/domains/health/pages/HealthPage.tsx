@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Title,
   Text,
@@ -58,7 +58,7 @@ export function HealthPage() {
     });
   };
 
-  const handleDownloadEk2 = (exam: Examination) => {
+  const handleDownloadEk2 = () => {
     notifications.show({
       title: 'EK-2 Formu indiriliyor...',
       message: 'PDF hazırlanıyor.',
@@ -176,7 +176,7 @@ export function HealthPage() {
                             <Menu.Divider />
                             <Menu.Item
                               leftSection={<IconFileText size={14} />}
-                              onClick={() => handleDownloadEk2(e)}
+                              onClick={handleDownloadEk2}
                             >
                               EK-2 İndir
                             </Menu.Item>
