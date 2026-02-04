@@ -27,7 +27,6 @@ import {
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@shared/i18n';
 import { useAuthStore } from '@shared/stores/authStore';
-import { useCompanyStore } from '@store/companyStore';
 import { useWorkerStore } from '@store/workerStore';
 import { useSubContractorStore } from '@store/subContractorStore';
 import { useDofStore } from '@store/dofStore';
@@ -201,7 +200,6 @@ function buildUpcomingActivities(
 export function HomePage() {
   const { t } = useTranslation();
   const currentUser = useAuthStore((s) => s.currentUser);
-  const companies = useCompanyStore((s) => s.companies);
   const workers = useWorkerStore((s) => s.workers);
   const subcontractors = useSubContractorStore((s) => s.subContractors);
   const dofRecords = useDofStore((s) => s.records);

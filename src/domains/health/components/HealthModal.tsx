@@ -6,6 +6,7 @@ import {
   Group,
   Button,
   Select,
+  Text,
   TextInput,
   NumberInput,
   Textarea,
@@ -33,7 +34,6 @@ import {
   type Conclusion,
   type ExamType,
 } from '../stores/healthStore';
-import type { DangerClass } from '@store/companyStore';
 import type { WorkerFormValues } from '@domains/worker/schemas/workerSchema';
 
 interface ExaminationFormValues {
@@ -122,12 +122,12 @@ export function HealthModal({
     const d = defaultExaminationInput();
     if (existingExam) {
       return {
-        employeeId: existingExam.employeeId,
-        employeeName: existingExam.employeeName,
-        companyId: existingExam.companyId,
-        examType: existingExam.examType,
+        employeeId: existingExam.employeeId ?? '',
+        employeeName: existingExam.employeeName ?? '',
+        companyId: existingExam.companyId ?? '',
+        examType: existingExam.examType ?? 'Periyodik',
         date: existingExam.date ? new Date(existingExam.date) : null,
-        validUntil: existingExam.validUntil,
+        validUntil: existingExam.validUntil ?? '',
         anamnesis: existingExam.anamnesis,
         physical: existingExam.physical,
         labs: existingExam.labs,
@@ -290,7 +290,7 @@ export function HealthModal({
       <Modal
         opened={opened}
         onClose={onClose}
-        onOpen={handleOpen}
+        transitionProps={{ onEntered: handleOpen }}
         title={existingExam ? 'Muayene Düzenle (EK-2)' : 'Yeni Muayene (EK-2)'}
         size="lg"
       >
@@ -336,7 +336,7 @@ export function HealthModal({
                 <Select
                   label="Muayene türü"
                   data={EXAM_TYPE_OPTIONS}
-                  value={watch('examType')}
+                  value={watch('examType') || null}
                   onChange={(v) => setValue('examType', (v as ExamType) ?? 'Periyodik')}
                 />
                 <Controller
@@ -379,14 +379,14 @@ export function HealthModal({
                 <Textarea
                   label={t('health.examination.form.chronicDiseases')}
                   placeholder={t('health.examination.form.chronicDiseasesPlaceholder')}
-                  value={watch('anamnesis.chronicIllnesses')}
+                  value={watch('anamnesis.chronicIllnesses') || ''}
                   onChange={(e) => setValue('anamnesis.chronicIllnesses', e.currentTarget.value)}
                   minRows={2}
                 />
                 <Textarea
                   label={t('health.examination.form.pastSurgeries')}
                   placeholder={t('health.examination.form.pastSurgeriesPlaceholder')}
-                  value={watch('anamnesis.surgeries')}
+                  value={watch('anamnesis.surgeries') || ''}
                   onChange={(e) => setValue('anamnesis.surgeries', e.currentTarget.value)}
                   minRows={2}
                 />
@@ -440,7 +440,7 @@ export function HealthModal({
                       <TextInput
                         label={t('health.examination.form.bloodPressure')}
                         placeholder="120/80"
-                        value={field.value}
+                        value={field.value || ''}
                         onChange={field.onChange}
                       />
                     )}
@@ -464,13 +464,13 @@ export function HealthModal({
                   <Select
                     label={t('health.examination.form.vision')}
                     data={PHYSICAL_FINDING_OPTIONS}
-                    value={watch('physical.vision')}
+                    value={watch('physical.vision') || null}
                     onChange={(v) => setValue('physical.vision', (v as Physical['vision']) ?? 'Normal')}
                   />
                   <Select
                     label={t('health.examination.form.hearing')}
                     data={PHYSICAL_FINDING_OPTIONS}
-                    value={watch('physical.hearing')}
+                    value={watch('physical.hearing') || null}
                     onChange={(v) => setValue('physical.hearing', (v as Physical['hearing']) ?? 'Normal')}
                   />
                 </Group>
@@ -478,21 +478,21 @@ export function HealthModal({
                 <Textarea
                   label={t('health.examination.form.bloodValues')}
                   placeholder={t('health.examination.form.bloodValuesPlaceholder')}
-                  value={watch('labs.bloodAnalysis')}
+                  value={watch('labs.bloodAnalysis') || ''}
                   onChange={(e) => setValue('labs.bloodAnalysis', e.currentTarget.value)}
                   minRows={1}
                 />
                 <Textarea
                   label={t('health.examination.form.audiometry')}
                   placeholder={t('health.examination.form.audiometryPlaceholder')}
-                  value={watch('labs.audiometry')}
+                  value={watch('labs.audiometry') || ''}
                   onChange={(e) => setValue('labs.audiometry', e.currentTarget.value)}
                   minRows={1}
                 />
                 <Textarea
                   label={t('health.examination.form.chestXRay')}
                   placeholder={t('health.examination.form.chestXRayPlaceholder')}
-                  value={watch('labs.lungXray')}
+                  value={watch('labs.lungXray') || ''}
                   onChange={(e) => setValue('labs.lungXray', e.currentTarget.value)}
                   minRows={1}
                 />
@@ -504,7 +504,7 @@ export function HealthModal({
                 <Select
                   label={t('health.examination.form.conclusion')}
                   data={RESULT_OPTIONS}
-                  value={watch('conclusion.result')}
+                  value={watch('conclusion.result') || null}
                   onChange={(v) => setValue('conclusion.result', (v as Conclusion['result']) ?? 'Elverişli')}
                 />
                 <Controller
@@ -543,7 +543,7 @@ export function HealthModal({
                     <Textarea
                       label={t('health.examination.form.conditions')}
                       placeholder={t('health.examination.form.conditionsPlaceholder')}
-                      value={field.value}
+                      value={field.value || ''}
                       onChange={field.onChange}
                       minRows={2}
                     />
