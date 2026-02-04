@@ -25,7 +25,7 @@ export default defineConfig({
     target: 'es2020',
     sourcemap: true,
     // EKLENDİ 1: Uyarı limitini 1.5MB'a çekiyoruz (Sarı uyarıyı kaldırır)
-    chunkSizeWarningLimit: 1500, 
+    chunkSizeWarningLimit: 2000, 
     rollupOptions: {
       output: {
         // GÜNCELLENDİ: Projedeki ağır kütüphaneleri ayrı dosyalara bölüyoruz
