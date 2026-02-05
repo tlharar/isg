@@ -20,6 +20,8 @@ export const companyFormSchema = z.object({
   phone: optionalString.default(''),
   email: z.union([z.literal(''), emailSchema]).default(''),
   status: companyStatusEnum,
+  /** If set, this company is a sub-contractor of the given company id. */
+  parentId: z.string().nullable().optional(),
 });
 
 export type CompanyFormValues = z.infer<typeof companyFormSchema>;

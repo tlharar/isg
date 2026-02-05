@@ -8,6 +8,16 @@ export interface EducationTemplate {
   id: string;
   name: string;
   createdAt: Date;
+  /** Eğitim Konusu - used to auto-fill form title */
+  subject?: string;
+  /** Eğitim Türü */
+  type?: EducationType;
+  /** Süre (hours) */
+  durationHours?: number;
+  /** Geçerlilik süresi (years) - used to set validUntil = today + N years */
+  validityYears?: number;
+  /** Açıklama (optional) */
+  description?: string;
 }
 
 /** @deprecated Use EducationTemplate */
@@ -27,10 +37,39 @@ export interface EducationSession {
   createdAt: Date;
   updatedAt: Date;
   isCompleted?: boolean;
+  description?: string;
 }
 
 const DEFAULT_TEMPLATES: EducationTemplate[] = [
-  { id: 't1', name: 'Standart Yıllık İSG Planı', createdAt: new Date() },
+  {
+    id: 't1',
+    name: 'Standart Yıllık İSG Planı',
+    createdAt: new Date(),
+    subject: 'Temel İSG Eğitimi',
+    type: 'Temel Eğitim',
+    durationHours: 16,
+    validityYears: 2,
+    description: 'Yıllık plana uygun temel iş sağlığı ve güvenliği eğitimi.',
+  },
+  {
+    id: 't2',
+    name: 'Yüksekte Çalışma Şablonu',
+    createdAt: new Date(),
+    subject: 'Yüksekte Çalışma Eğitimi',
+    type: 'Mesleki Eğitim',
+    durationHours: 8,
+    validityYears: 1,
+    description: 'Yüksekte güvenli çalışma prosedürleri ve KKD kullanımı.',
+  },
+  {
+    id: 't3',
+    name: 'İşe Başlama Oryantasyonu',
+    createdAt: new Date(),
+    subject: 'İşe Başlama Eğitimi',
+    type: 'İşe Başlama',
+    durationHours: 4,
+    validityYears: 1,
+  },
 ];
 
 function generateTemplateId(): string {
@@ -131,6 +170,7 @@ interface EducationState {
   updateSession: (id: string, session: Partial<Omit<EducationSession, 'id' | 'createdAt' | 'updatedAt'>>) => void;
   deleteSession: (id: string) => void;
   getSessionById: (id: string) => EducationSession | undefined;
+  getTemplateById: (id: string) => EducationTemplate | undefined;
   addTemplate: (name: string) => void;
   deleteTemplate: (id: string) => void;
   toggleComplete: (id: string) => void;
@@ -169,6 +209,8 @@ export const useEducationStore = create<EducationState>()(
       },
 
       getSessionById: (id) => get().sessions.find((s) => s.id === id),
+
+      getTemplateById: (id) => get().templates.find((t) => t.id === id),
 
       addTemplate: (name) => {
         const trimmed = name.trim();

@@ -48,6 +48,7 @@ export interface EmployeeModalProps {
 
 export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t }: EmployeeModalProps) {
   const companies = useCompanyStore((s) => s.companies);
+  const getCompanyById = useCompanyStore((s) => s.getCompanyById);
   const {
     register,
     handleSubmit,
@@ -69,6 +70,7 @@ export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t
           jobTitleOther: getInitialJobTitleOther(worker),
           gender: worker.gender,
           companyId: worker.companyId ?? undefined,
+          subContractorId: worker.subContractorId ?? undefined,
         }
       : {
           nameSurname: '',
@@ -81,6 +83,7 @@ export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t
           jobTitleOther: '',
           gender: undefined,
           companyId: selectedCompanyId ?? undefined,
+          subContractorId: undefined,
         },
   });
 
@@ -89,8 +92,15 @@ export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t
   const dateOfBirth = watch('dateOfBirth');
   const visaDate = watch('visaDate');
   const jobTitleSelect = watch('jobTitleSelect');
+  const companyId = watch('companyId');
   const showCompanySelect = !selectedCompanyId;
   const showJobTitleOther = jobTitleSelect === 'Diğer';
+
+  const effectiveCompanyId = companyId ?? selectedCompanyId ?? null;
+  const selectedCompany = effectiveCompanyId ? getCompanyById(effectiveCompanyId) : null;
+  const subContractors = selectedCompany?.subContractors ?? [];
+  const showSubContractorSelect = subContractors.length > 0;
+  const subContractorOptions = subContractors.map((s) => ({ value: s.id, label: s.name }));
 
   const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
 
@@ -201,8 +211,21 @@ export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t
             label={t('worker.form.company')}
             placeholder={t('worker.form.company')}
             data={companyOptions}
-            value={watch('companyId') ?? null}
-            onChange={(v) => setValue('companyId', v ?? undefined)}
+            value={companyId ?? null}
+            onChange={(v) => {
+              setValue('companyId', v ?? undefined);
+              setValue('subContractorId', undefined);
+            }}
+            clearable
+          />
+        )}
+        {showSubContractorSelect && (
+          <Select
+            label={t('worker.form.subContractorOptional')}
+            placeholder={t('worker.form.subContractorOptional')}
+            data={subContractorOptions}
+            value={watch('subContractorId') ?? null}
+            onChange={(v) => setValue('subContractorId', v ?? undefined)}
             clearable
           />
         )}

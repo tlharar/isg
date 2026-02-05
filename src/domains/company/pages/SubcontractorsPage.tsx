@@ -1,4 +1,3 @@
-import { useState, useMemo } from 'react';
 import {
   Title,
   Text,
@@ -7,71 +6,43 @@ import {
   Stack,
   Paper,
   Table,
-  Badge,
   ActionIcon,
   Box,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconEdit, IconTrash, IconAlertTriangle } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconAlertTriangle } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
-import { useSubContractorStore, type SubContractor, getSubContractorStatus } from '@store/subContractorStore';
-import { useCompanyStore } from '@store/companyStore';
+import { useCompanyStore, type SubContractor } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
-import { SubContractorModal } from '@domains/company/components/SubContractorModal';
-
-function formatDate(d: Date): string {
-  const date = new Date(d);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}.${month}.${year}`;
-}
+import { CompanySubContractorSimpleModal } from '@domains/company/components/CompanySubContractorSimpleModal';
 
 export function SubcontractorsPage() {
   const { t } = useTranslation();
   const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
   const getCompanyById = useCompanyStore((s) => s.getCompanyById);
-  const fetchSubContractors = useSubContractorStore((s) => s.fetchSubContractors);
-  const deleteSubContractor = useSubContractorStore((s) => s.deleteSubContractor);
+  const removeSubContractor = useCompanyStore((s) => s.removeSubContractor);
 
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
-  const [editingItem, setEditingItem] = useState<SubContractor | null>(null);
 
-  const company = useMemo(
-    () => (selectedCompanyId ? getCompanyById(selectedCompanyId) : null),
-    [selectedCompanyId, getCompanyById]
-  );
-
-  const subContractors = useMemo(
-    () => (selectedCompanyId ? fetchSubContractors(selectedCompanyId) : []),
-    [selectedCompanyId, fetchSubContractors]
-  );
+  const company = selectedCompanyId ? getCompanyById(selectedCompanyId) : null;
+  const subContractors: SubContractor[] = company?.subContractors ?? [];
 
   const handleAdd = () => {
-    setEditingItem(null);
-    openModal();
-  };
-
-  const handleEdit = (item: SubContractor) => {
-    setEditingItem(item);
     openModal();
   };
 
   const handleDelete = (item: SubContractor) => {
     if (window.confirm(t('subcontractors.deleteConfirm'))) {
-      deleteSubContractor(item.id);
-      notifications.show({
-        title: t('subcontractors.deleteSuccess'),
-        message: t('subcontractors.deleteSuccessMessage'),
-        color: 'green',
-      });
+      if (selectedCompanyId) {
+        removeSubContractor(selectedCompanyId, item.id);
+        notifications.show({
+          title: t('subcontractors.deleteSuccess'),
+          message: t('subcontractors.deleteSuccessMessage'),
+          color: 'green',
+        });
+      }
     }
-  };
-
-  const handleModalClose = () => {
-    setEditingItem(null);
-    closeModal();
   };
 
   if (!selectedCompanyId) {
@@ -115,79 +86,45 @@ export function SubcontractorsPage() {
               </Button>
             </Stack>
           ) : (
-            <Table.ScrollContainer minWidth={800}>
+            <Table.ScrollContainer minWidth={600}>
               <Table striped highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>{t('subcontractors.table.name')}</Table.Th>
                     <Table.Th>{t('subcontractors.table.sgkNumber')}</Table.Th>
-                    <Table.Th>{t('subcontractors.table.workDescription')}</Table.Th>
-                    <Table.Th>{t('subcontractors.table.contractDates')}</Table.Th>
-                    <Table.Th>{t('subcontractors.table.status')}</Table.Th>
-                    <Table.Th>{t('subcontractors.table.actions')}</Table.Th>
+                    <Table.Th>{t('subcontractors.table.contactPerson')}</Table.Th>
+                    <Table.Th style={{ width: 80 }}>{t('subcontractors.table.actions')}</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {subContractors.map((item) => {
-                    const status = getSubContractorStatus(item.contractEndDate);
-                    const isExpired = status === 'Passive';
-                    return (
-                      <Table.Tr
-                        key={item.id}
-                        style={{
-                          opacity: isExpired ? 0.75 : 1,
-                        }}
-                      >
-                        <Table.Td>
-                          <Text size="sm" fw={600}>
-                            {item.name}
-                          </Text>
-                        </Table.Td>
-                        <Table.Td>
-                          <Text size="sm" ff="monospace">
-                            {item.sgkNumber}
-                          </Text>
-                        </Table.Td>
-                        <Table.Td style={{ maxWidth: 280 }}>
-                          <Text size="sm" lineClamp={2} title={item.workDescription}>
-                            {item.workDescription || '—'}
-                          </Text>
-                        </Table.Td>
-                        <Table.Td>
-                          <Text size="sm">
-                            {formatDate(item.contractStartDate)} – {formatDate(item.contractEndDate)}
-                          </Text>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge color={status === 'Active' ? 'green' : 'gray'} size="sm">
-                            {status === 'Active'
-                              ? t('subcontractors.statusActive')
-                              : t('subcontractors.statusPassive')}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Group gap="xs" wrap="nowrap">
-                            <ActionIcon
-                              variant="subtle"
-                              color="blue"
-                              onClick={() => handleEdit(item)}
-                              aria-label={t('common.edit')}
-                            >
-                              <IconEdit size={18} />
-                            </ActionIcon>
-                            <ActionIcon
-                              variant="subtle"
-                              color="red"
-                              onClick={() => handleDelete(item)}
-                              aria-label={t('common.delete')}
-                            >
-                              <IconTrash size={18} />
-                            </ActionIcon>
-                          </Group>
-                        </Table.Td>
-                      </Table.Tr>
-                    );
-                  })}
+                  {subContractors.map((item) => (
+                    <Table.Tr key={item.id}>
+                      <Table.Td>
+                        <Text size="sm" fw={600}>
+                          {item.name}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm" ff="monospace">
+                          {item.sgkNumber}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm">{item.contactPerson || '—'}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          size="sm"
+                          onClick={() => handleDelete(item)}
+                          aria-label={t('common.delete')}
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
                 </Table.Tbody>
               </Table>
             </Table.ScrollContainer>
@@ -196,11 +133,10 @@ export function SubcontractorsPage() {
       </Stack>
 
       {selectedCompanyId && (
-        <SubContractorModal
+        <CompanySubContractorSimpleModal
           opened={modalOpened}
-          onClose={handleModalClose}
-          mainCompanyId={selectedCompanyId}
-          editSubContractor={editingItem}
+          onClose={closeModal}
+          companyId={selectedCompanyId}
         />
       )}
     </>

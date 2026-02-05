@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AppShell, Box, Group, Text, UnstyledButton } from '@mantine/core';
+import { useTranslation } from '@shared/i18n';
 import { NavContent } from '../nav/NavContent';
 
 interface ShellSidebarProps {
@@ -13,6 +14,8 @@ interface ShellSidebarProps {
  * Logo and nav text use --sidebar-text (white/light). Active state uses cyan-9 + bold.
  */
 export function ShellSidebar({ onCloseMobileNav }: ShellSidebarProps) {
+  const { t } = useTranslation();
+
   return (
     <AppShell.Navbar
       p={0}
@@ -29,12 +32,12 @@ export function ShellSidebar({ onCloseMobileNav }: ShellSidebarProps) {
         component={Link}
         to="/"
         style={{ display: 'block', textDecoration: 'none', color: 'inherit', flexShrink: 0 }}
-        aria-label="Özartek"
+        aria-label={t('common.appName')}
       >
         <Group h={60} px="md" wrap="nowrap" gap={6} style={{ minWidth: 0, color: 'var(--sidebar-text)' }}>
           <img
             src="/logo.png"
-            alt="Özartek Logo"
+            alt={t('common.logoAlt')}
             height={36}
             style={{ display: 'block', flexShrink: 0, width: 'auto' }}
           />
@@ -53,7 +56,7 @@ export function ShellSidebar({ onCloseMobileNav }: ShellSidebarProps) {
               color: 'var(--sidebar-text)',
             }}
           >
-            ÖZARTEK
+            {t('appTitle')}
           </Text>
         </Group>
       </UnstyledButton>

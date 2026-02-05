@@ -30,9 +30,14 @@ function getInitials(firstName: string, lastName: string, email: string): string
   return '?';
 }
 
-function getDisplayName(firstName: string, lastName: string, email: string): string {
+function getDisplayName(
+  firstName: string,
+  lastName: string,
+  email: string,
+  userFallback: string
+): string {
   const full = [firstName, lastName].filter(Boolean).join(' ').trim();
-  return full || email || 'Kullanıcı';
+  return full || email || userFallback;
 }
 
 interface ShellHeaderProps {
@@ -45,20 +50,34 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
   const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
   const setSelectedCompanyId = useAppStore((s) => s.setSelectedCompanyId);
   const setLocale = useAppStore((s) => s.setLocale);
-  const companies = useCompanyStore((s) => s.companies);
+  const getMainCompanies = useCompanyStore((s) => s.getMainCompanies);
+  const getSubContractorCompanies = useCompanyStore((s) => s.getSubContractorCompanies);
   const currentUser = useAuthStore((s) => s.currentUser);
   const logout = useAuthStore((s) => s.logout);
   const { t, locale } = useTranslation();
   const [passwordModalOpened, { open: openPasswordModal, close: closePasswordModal }] = useDisclosure(false);
   const [accountModalOpened, { open: openAccountModal, close: closeAccountModal }] = useDisclosure(false);
 
-  const companyOptions = [
-    { value: '', label: t('common.allCompanies') },
-    ...companies.map((c) => ({ value: c.id, label: c.name })),
-  ];
+  const companyOptions = (() => {
+    const mains = getMainCompanies();
+    const options: { value: string; label: string }[] = [{ value: '', label: t('common.allCompanies') }];
+    for (const main of mains) {
+      options.push({ value: main.id, label: main.name });
+      const subs = getSubContractorCompanies(main.id);
+      for (const sub of subs) {
+        options.push({ value: sub.id, label: `   ↳ ${sub.name}` });
+      }
+    }
+    return options;
+  })();
 
   const displayName = currentUser
-    ? getDisplayName(currentUser.firstName, currentUser.lastName, currentUser.email)
+    ? getDisplayName(
+        currentUser.firstName,
+        currentUser.lastName,
+        currentUser.email,
+        t('common.user')
+      )
     : '';
   const initials = currentUser
     ? getInitials(currentUser.firstName, currentUser.lastName, currentUser.email)
@@ -92,10 +111,10 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
               alignItems: 'center',
             }}
           >
-            <Link to="/" style={{ display: 'flex', alignItems: 'center' }} aria-label="Özartek">
+            <Link to="/" style={{ display: 'flex', alignItems: 'center' }} aria-label={t('common.appName')}>
               <img
                 src="/logo.png"
-                alt="Özartek Logo"
+                alt={t('common.logoAlt')}
                 height={36}
                 style={{ display: 'block', width: 'auto' }}
               />
@@ -144,16 +163,16 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
                   style={{ maxWidth: 200 }}
                 >
                   <Box visibleFrom="xs" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {displayName || 'Kullanıcı'}
+                    {displayName || t('common.user')}
                   </Box>
                 </Button>
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Item leftSection={<IconUser size={14} />} onClick={openAccountModal}>
-                  Hesap Bilgileri
+                  {t('shell.accountInfo')}
                 </Menu.Item>
                 <Menu.Item leftSection={<IconKey size={14} />} onClick={openPasswordModal}>
-                  Şifre Değiştir
+                  {t('shell.changePassword')}
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
@@ -161,7 +180,7 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
                   color="red"
                   onClick={() => logout()}
                 >
-                  Çıkış Yap
+                  {t('common.logout')}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>

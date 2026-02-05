@@ -1,8 +1,19 @@
 import { useEffect, useMemo } from 'react';
-import { Modal, TextInput, Select, MultiSelect, NumberInput, Button, Stack, Group } from '@mantine/core';
+import {
+  Modal,
+  TextInput,
+  Select,
+  MultiSelect,
+  NumberInput,
+  Button,
+  Stack,
+  Group,
+  Textarea,
+} from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useTranslation } from '@shared/i18n';
+import { useEducationStore } from '@store/educationStore';
 import { useWorkerStore } from '@store/workerStore';
 import type { EducationSession, EducationType, EducationStatus } from '@store/educationStore';
 
@@ -24,6 +35,7 @@ export interface EducationFormValues {
   location: string;
   attendees: string[];
   status: EducationStatus;
+  description?: string;
 }
 
 const EDUCATION_TYPE_OPTIONS = [
@@ -42,10 +54,21 @@ const STATUS_OPTIONS = [
 export function EducationModal({ opened, onClose, onSubmit, initialValues, title }: EducationModalProps) {
   const { t } = useTranslation();
   const workers = useWorkerStore((s) => s.workers);
+  const templates = useEducationStore((s) => s.templates);
+  const getTemplateById = useEducationStore((s) => s.getTemplateById);
 
   const attendeeOptions = useMemo(
     () => workers.map((w) => ({ value: w.id, label: w.nameSurname })),
     [workers]
+  );
+
+  const templateSelectOptions = useMemo(
+    () =>
+      templates.map((tmpl) => ({
+        value: tmpl.id,
+        label: tmpl.name,
+      })),
+    [templates]
   );
 
   const form = useForm<EducationFormValues>({
@@ -59,6 +82,7 @@ export function EducationModal({ opened, onClose, onSubmit, initialValues, title
       location: '',
       attendees: [],
       status: 'Planlandı',
+      description: '',
     },
     validate: {
       title: (value) => (!value.trim() ? t('education.form.titleRequired') : null),
@@ -82,9 +106,33 @@ export function EducationModal({ opened, onClose, onSubmit, initialValues, title
         location: initialValues?.location || '',
         attendees: initialValues?.attendees ?? [],
         status: initialValues?.status || 'Planlandı',
+        description: initialValues?.description ?? '',
       });
     }
   }, [opened, initialValues]);
+
+  const handleTemplateChange = (templateId: string | null) => {
+    if (!templateId) return;
+    const template = getTemplateById(templateId);
+    if (!template) return;
+    const updates: Partial<EducationFormValues> = {};
+    if (template.subject != null && template.subject !== '') {
+      updates.title = template.subject;
+    } else if (template.name) {
+      updates.title = template.name;
+    }
+    if (template.type != null) updates.type = template.type;
+    if (template.durationHours != null) updates.durationHours = template.durationHours;
+    if (template.validityYears != null) {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() + template.validityYears);
+      updates.validUntil = d;
+    }
+    if (template.description != null) updates.description = template.description;
+    if (Object.keys(updates).length > 0) {
+      form.setValues(updates);
+    }
+  };
 
   const handleSubmit = (values: EducationFormValues) => {
     onSubmit(values);
@@ -101,6 +149,17 @@ export function EducationModal({ opened, onClose, onSubmit, initialValues, title
     <Modal opened={opened} onClose={handleClose} title={title} size="lg" centered>
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack gap="md">
+          {/* Template selector - only when adding new (no initialValues) */}
+          {!initialValues && (
+            <Select
+              label={t('education.form.fillFromTemplate')}
+              placeholder={t('education.form.selectTemplate')}
+              data={templateSelectOptions}
+              clearable
+              onChange={handleTemplateChange}
+            />
+          )}
+
           {/* Title */}
           <TextInput
             label={t('education.form.title')}
@@ -180,6 +239,14 @@ export function EducationModal({ opened, onClose, onSubmit, initialValues, title
             data={STATUS_OPTIONS}
             required
             {...form.getInputProps('status')}
+          />
+
+          {/* Description (optional) */}
+          <Textarea
+            label={t('education.form.description')}
+            placeholder={t('education.form.descriptionPlaceholder')}
+            minRows={2}
+            {...form.getInputProps('description')}
           />
 
           {/* Actions */}

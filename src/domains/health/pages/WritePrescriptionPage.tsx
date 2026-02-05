@@ -26,7 +26,9 @@ import {
   USAGE_TYPE_OPTIONS,
   FAVORITE_DIAGNOSES,
   type PrescriptionDrug,
+  type Prescription,
 } from '@store/prescriptionStore';
+import { MedicalReportModal } from '@domains/health/components/MedicalReportModal';
 import dayjs from 'dayjs';
 
 type PatientMethod = 'company' | 'all' | 'tc';
@@ -63,6 +65,8 @@ export function WritePrescriptionPage() {
     period: 7,
   });
   const [drugsList, setDrugsList] = useState<PrescriptionDrug[]>([]);
+  const [lastSavedPrescription, setLastSavedPrescription] = useState<Prescription | null>(null);
+  const [reportModalOpened, setReportModalOpened] = useState(false);
 
   const workerOptions = useMemo(() => {
     let list = workers;
@@ -172,13 +176,14 @@ export function WritePrescriptionPage() {
       });
       return;
     }
-    addPrescription({
+    const saved = addPrescription({
       patientId: patientSummary.patientId,
       patientName: patientSummary.name,
       tcNo: patientSummary.tcNo,
       diagnoses: selectedDiagnoses,
       drugs: drugsList,
     });
+    setLastSavedPrescription(saved);
     notifications.show({
       title: 'Reçete kaydedildi',
       message: 'Reçete sisteme kaydedildi. (E-İmza entegrasyonu bekleniyor).',
@@ -387,10 +392,38 @@ export function WritePrescriptionPage() {
         <Text size="sm" c="dimmed" mb="md">
           E-imza altyapısı hazır olmadığı için reçete yalnızca kaydedilir; imzalı gönderim sonra eklenecektir.
         </Text>
-        <Button onClick={handleSavePrescription} size="md">
-          Reçeteyi Kaydet
-        </Button>
+        <Group>
+          <Button onClick={handleSavePrescription} size="md">
+            Reçeteyi Kaydet
+          </Button>
+          {lastSavedPrescription && (
+            <Button
+              variant="light"
+              size="md"
+              onClick={() => setReportModalOpened(true)}
+            >
+              İstirahat Raporu Yaz
+            </Button>
+          )}
+        </Group>
       </Paper>
+
+      <MedicalReportModal
+        opened={reportModalOpened}
+        onClose={() => setReportModalOpened(false)}
+        initial={
+          lastSavedPrescription
+            ? {
+                patientId: lastSavedPrescription.patientId,
+                patientName: lastSavedPrescription.patientName,
+                tcNo: lastSavedPrescription.tcNo,
+                diagnosis: lastSavedPrescription.diagnoses[0],
+                prescriptionId: lastSavedPrescription.id,
+              }
+            : null
+        }
+        printAfterSave={false}
+      />
     </Stack>
   );
 }

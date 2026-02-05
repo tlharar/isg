@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   Title,
   Text,
+  Button,
   Group,
   Stack,
   Paper,
@@ -14,9 +15,11 @@ import {
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
-import { IconEye, IconPrinter } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
+import { IconEye, IconPrinter, IconFileDescription } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { usePrescriptionStore, type Prescription } from '@store/prescriptionStore';
+import { MedicalReportModal } from '@domains/health/components/MedicalReportModal';
 
 function formatDate(iso: string): string {
   if (!iso) return '—';
@@ -30,6 +33,7 @@ export function PrescriptionListPage() {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [detailPrescription, setDetailPrescription] = useState<Prescription | null>(null);
   const [detailOpened, { open: openDetail, close: closeDetail }] = useDisclosure(false);
+  const [reportModalOpened, setReportModalOpened] = useState(false);
 
   const filteredPrescriptions = useMemo(() => {
     let list = [...prescriptions];
@@ -236,9 +240,43 @@ export function PrescriptionListPage() {
                 </List>
               )}
             </div>
+
+            <Group mt="md">
+              <Button
+                variant="light"
+                leftSection={<IconFileDescription size={16} />}
+                onClick={() => setReportModalOpened(true)}
+              >
+                İstirahat Raporu Yaz
+              </Button>
+              <Button
+                component={Link}
+                to={`/health/patients/${detailPrescription.patientId}`}
+                variant="subtle"
+                size="sm"
+              >
+                Hasta raporları
+              </Button>
+            </Group>
           </Stack>
         )}
       </Modal>
+
+      <MedicalReportModal
+        opened={reportModalOpened}
+        onClose={() => setReportModalOpened(false)}
+        initial={
+          detailPrescription
+            ? {
+                patientId: detailPrescription.patientId,
+                patientName: detailPrescription.patientName,
+                tcNo: detailPrescription.tcNo,
+                diagnosis: detailPrescription.diagnoses[0],
+                prescriptionId: detailPrescription.id,
+              }
+            : null
+        }
+      />
     </>
   );
 }

@@ -18,55 +18,56 @@ import {
   Code,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconUpload, IconTrash, IconSearch, IconFilter, IconAlertTriangle, IconRefresh, IconPhone } from '@tabler/icons-react';
+import { IconUpload, IconTrash, IconSearch, IconFilter, IconAlertTriangle, IconRefresh, IconPhone, IconEdit } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
-import { useOsgbStore, type OsgbLead, type OsgbStatus } from '@store/osgbStore';
+import { useCrmStore, type CRMLead, type CRMStatus } from '../stores/crmStore';
+import { LeadDetailModal } from '../components/LeadDetailModal';
 import * as XLSX from 'xlsx';
 
 // Pagination settings
 const ITEMS_PER_PAGE = 25;
 
 /**
- * Get status badge color
+ * Get status badge color (CRM pipeline)
  */
-function getStatusBadgeColor(status: OsgbStatus): string {
+function getStatusBadgeColor(status: CRMStatus): string {
   switch (status) {
-    case 'Aktif':
+    case 'WON':
       return 'green';
-    case 'Pasif':
-      return 'gray';
-    case 'İptal':
+    case 'LOST':
       return 'red';
-    case 'Aday':
+    case 'DEMO_DEFINED':
+    case 'OFFER_SENT':
       return 'blue';
+    case 'CONTACTED':
+      return 'cyan';
+    case 'NEW':
     default:
       return 'gray';
   }
 }
 
+const CRM_STATUS_LABELS: Record<CRMStatus, string> = {
+  NEW: 'Yeni',
+  CONTACTED: 'Görüşüldü',
+  DEMO_DEFINED: 'Demo Tanımlandı',
+  OFFER_SENT: 'Teklif Gönderildi',
+  WON: 'Satış / Aktif Müşteri',
+  LOST: 'Reddedildi',
+};
+
 /**
- * Normalize status string from Excel/CSV
- * Smart mapping for various status formats
+ * Normalize status string from Excel/CSV to CRMStatus
  */
-function normalizeStatus(value: string | undefined | null): OsgbStatus {
-  if (!value) return 'Aday';
+function normalizeStatusFromExcel(value: string | undefined | null): CRMStatus {
+  if (!value) return 'NEW';
   const normalized = value.toString().trim().toLowerCase();
-  
-  if (normalized.includes('aktif') || normalized.includes('active') || normalized === 'a') {
-    return 'Aktif';
-  }
-  if (normalized.includes('iptal') || normalized.includes('cancel') || normalized.includes('silindi')) {
-    return 'İptal';
-  }
-  if (normalized.includes('pasif') || normalized.includes('passive') || normalized === 'p') {
-    return 'Pasif';
-  }
-  if (normalized.includes('aday') || normalized.includes('candidate') || normalized.includes('beklemede')) {
-    return 'Aday';
-  }
-  
-  return 'Aday';
+  if (normalized.includes('aktif') || normalized.includes('active') || normalized === 'a') return 'WON';
+  if (normalized.includes('iptal') || normalized.includes('cancel') || normalized.includes('silindi')) return 'LOST';
+  if (normalized.includes('pasif') || normalized.includes('passive') || normalized === 'p') return 'LOST';
+  if (normalized.includes('aday') || normalized.includes('candidate') || normalized.includes('beklemede')) return 'NEW';
+  return 'NEW';
 }
 
 /**
@@ -124,7 +125,7 @@ function getColumnValue(row: Record<string, any>, possibleHeaders: string[]): st
  * - Telefon
  * - E-posta
  */
-function mapRowToLead(row: Record<string, any>, rowIndex: number): Omit<OsgbLead, 'id' | 'createdAt' | 'updatedAt'> | null {
+function mapRowToLead(row: Record<string, any>, rowIndex: number): Omit<CRMLead, 'id' | 'createdAt' | 'updatedAt' | 'notes'> | null {
   try {
     // Skip completely empty rows
     const rowValues = Object.values(row);
@@ -282,7 +283,7 @@ function mapRowToLead(row: Record<string, any>, rowIndex: number): Omit<OsgbLead
       address,
       phone,
       email,
-      status: normalizeStatus(statusValue),
+      status: normalizeStatusFromExcel(statusValue),
     };
 
     console.log(`Row ${rowIndex + 1}: Successfully mapped - ${name}`);
@@ -295,12 +296,15 @@ function mapRowToLead(row: Record<string, any>, rowIndex: number): Omit<OsgbLead
 
 export function LeadOsgbPage() {
   const { t } = useTranslation();
-  const leads = useOsgbStore((s) => s.leads);
-  const addLeadsBulk = useOsgbStore((s) => s.addLeadsBulk);
-  const replaceAllLeads = useOsgbStore((s) => s.replaceAllLeads);
-  const deleteLead = useOsgbStore((s) => s.deleteLead);
-  const deleteAllLeads = useOsgbStore((s) => s.deleteAllLeads);
-  const getUniqueCities = useOsgbStore((s) => s.getUniqueCities);
+  const leads = useCrmStore((s) => s.leads);
+  const addLeadsBulk = useCrmStore((s) => s.addLeadsBulk);
+  const replaceAllLeads = useCrmStore((s) => s.replaceAllLeads);
+  const deleteLead = useCrmStore((s) => s.deleteLead);
+  const deleteAllLeads = useCrmStore((s) => s.deleteAllLeads);
+  const getUniqueCities = useCrmStore((s) => s.getUniqueCities);
+
+  const [detailLead, setDetailLead] = useState<CRMLead | null>(null);
+  const [detailModalOpened, { open: openDetailModal, close: closeDetailModal }] = useDisclosure(false);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -344,7 +348,7 @@ export function LeadOsgbPage() {
       result = result.filter((lead) => lead.city === selectedCity);
     }
 
-    // Filter by status
+    // Filter by status (CRM pipeline)
     if (selectedStatus) {
       result = result.filter((lead) => lead.status === selectedStatus);
     }
@@ -452,8 +456,8 @@ export function LeadOsgbPage() {
           setDetectedColumns([]);
         }
 
-        // Map rows to leads
-        const validLeads: Omit<OsgbLead, 'id' | 'createdAt' | 'updatedAt'>[] = [];
+        // Map rows to leads (CRM with status NEW or from Excel)
+        const validLeads: Omit<CRMLead, 'id' | 'createdAt' | 'updatedAt' | 'notes'>[] = [];
         let skippedCount = 0;
 
         console.log('=== MAPPING ROWS ===');
@@ -536,7 +540,17 @@ export function LeadOsgbPage() {
     event.target.value = '';
   };
 
-  const handleDeleteLead = (lead: OsgbLead) => {
+  const handleOpenDetail = (lead: CRMLead) => {
+    setDetailLead(lead);
+    openDetailModal();
+  };
+
+  const handleDetailClose = () => {
+    closeDetailModal();
+    setDetailLead(null);
+  };
+
+  const handleDeleteLead = (lead: CRMLead) => {
     if (window.confirm(t('crm.deleteConfirm'))) {
       deleteLead(lead.id);
       notifications.show({
@@ -560,7 +574,7 @@ export function LeadOsgbPage() {
     });
   };
 
-  const handleDefineLicense = (lead: OsgbLead) => {
+  const handleDefineLicense = (lead: CRMLead) => {
     // Placeholder for license definition
     notifications.show({
       title: t('crm.defineLicense'),
@@ -575,12 +589,15 @@ export function LeadOsgbPage() {
     [uniqueCities]
   );
 
-  // Status filter options
-  const statusOptions = [
-    { value: 'Aktif', label: 'Aktif' },
-    { value: 'Pasif', label: 'Pasif' },
-    { value: 'İptal', label: 'İptal' },
-    { value: 'Aday', label: 'Aday' },
+  // Status filter options (CRM pipeline)
+  const statusFilterOptions = [
+    { value: '', label: t('crm.filterStatusPlaceholder') ?? 'Tümü' },
+    { value: 'NEW', label: 'Yeni' },
+    { value: 'CONTACTED', label: 'Görüşüldü' },
+    { value: 'DEMO_DEFINED', label: 'Demo Tanımlandı' },
+    { value: 'OFFER_SENT', label: 'Teklif Gönderildi' },
+    { value: 'WON', label: 'Satış / Aktif Müşteri' },
+    { value: 'LOST', label: 'Reddedildi' },
   ];
 
   return (
@@ -725,11 +742,11 @@ export function LeadOsgbPage() {
               <Select
                 label={t('crm.filterStatus')}
                 placeholder={t('crm.filterStatusPlaceholder')}
-                data={statusOptions}
+                data={statusFilterOptions}
                 value={selectedStatus}
                 onChange={handleStatusChange}
                 clearable
-                style={{ minWidth: 140 }}
+                style={{ minWidth: 180 }}
               />
               {(searchQuery || selectedCity || selectedStatus) && (
                 <Button
@@ -791,8 +808,12 @@ export function LeadOsgbPage() {
                   </Table.Thead>
                   <Table.Tbody>
                     {paginatedLeads.map((lead, index) => (
-                      <Table.Tr key={lead.id}>
-                        <Table.Td>
+                      <Table.Tr
+                        key={lead.id}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleOpenDetail(lead)}
+                      >
+                        <Table.Td onClick={(e) => e.stopPropagation()}>
                           <Text size="sm" c="dimmed">
                             {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                           </Text>
@@ -843,23 +864,37 @@ export function LeadOsgbPage() {
                         </Table.Td>
                         <Table.Td>
                           <Badge color={getStatusBadgeColor(lead.status)} size="sm">
-                            {lead.status}
+                            {CRM_STATUS_LABELS[lead.status]}
                           </Badge>
                         </Table.Td>
-                        <Table.Td>
+                        <Table.Td onClick={(e) => e.stopPropagation()}>
                           <Group gap="xs" wrap="nowrap">
+                            <ActionIcon
+                              variant="subtle"
+                              size="sm"
+                              onClick={() => handleOpenDetail(lead)}
+                              aria-label="Detay"
+                            >
+                              <IconEdit size={18} />
+                            </ActionIcon>
                             <Button
                               size="xs"
                               variant="light"
                               color="blue"
-                              onClick={() => handleDefineLicense(lead)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDefineLicense(lead);
+                              }}
                             >
                               {t('crm.defineLicense')}
                             </Button>
                             <ActionIcon
                               variant="subtle"
                               color="red"
-                              onClick={() => handleDeleteLead(lead)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteLead(lead);
+                              }}
                               aria-label={t('common.delete')}
                             >
                               <IconTrash size={18} />
@@ -919,6 +954,12 @@ export function LeadOsgbPage() {
           </Group>
         </Stack>
       </Modal>
+
+      <LeadDetailModal
+        opened={detailModalOpened}
+        onClose={handleDetailClose}
+        lead={detailLead}
+      />
     </>
   );
 }

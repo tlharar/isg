@@ -15,15 +15,16 @@ import {
   Select,
   Badge,
   Tabs,
+  Switch,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconDots, IconEdit, IconTrash, IconDownload, IconUpload, IconLink, IconCheck } from '@tabler/icons-react';
+import { IconPlus, IconDots, IconEdit, IconTrash, IconDownload, IconUpload, IconLink, IconCheck, IconArrowDownRight } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { companyFormSchema, type CompanyFormValues } from '../schemas/companySchema';
-import { useCompanyStore, type Company, type CompanyStatus, type DangerClass } from '@store/companyStore';
+import { useCompanyStore, type Company, type CompanyStatus, type DangerClass, isMainCompany } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
 import * as XLSX from 'xlsx';
 
@@ -109,6 +110,10 @@ interface CompanyModalFormProps {
 }
 
 function CompanyModalForm({ company, onSubmit, onCancel, t }: CompanyModalFormProps) {
+  const getMainCompanies = useCompanyStore((s) => s.getMainCompanies);
+  const mainCompanies = getMainCompanies();
+  const [isSubContractorChecked, setIsSubContractorChecked] = useState(!!(company?.parentId));
+
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: company
@@ -126,6 +131,7 @@ function CompanyModalForm({ company, onSubmit, onCancel, t }: CompanyModalFormPr
           phone: company.phone ?? '',
           email: company.email ?? '',
           status: company.status,
+          parentId: company.parentId ?? null,
         }
       : {
           name: '',
@@ -141,11 +147,24 @@ function CompanyModalForm({ company, onSubmit, onCancel, t }: CompanyModalFormPr
           phone: '',
           email: '',
           status: 'active',
+          parentId: null,
         },
   });
 
+  const mainCompanyOptions = mainCompanies
+    .filter((c) => !company || c.id !== company.id)
+    .map((c) => ({ value: c.id, label: c.name }));
+
+  const handleFormSubmit = (data: CompanyFormValues) => {
+    if (isSubContractorChecked && (data.parentId == null || data.parentId === '')) {
+      notifications.show({ title: 'Hata', message: 'Alt işveren için ana firma seçin.', color: 'red' });
+      return;
+    }
+    onSubmit(data);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <Tabs defaultValue="general">
         <Tabs.List mb="md">
           <Tabs.Tab value="general">{t('company.tabs.general')}</Tabs.Tab>
@@ -155,6 +174,27 @@ function CompanyModalForm({ company, onSubmit, onCancel, t }: CompanyModalFormPr
 
         <Tabs.Panel value="general">
           <Stack gap="md">
+            <Switch
+              label="Bu bir Alt İşverendir / Taşerondur"
+              description="İşaretlenirse, aşağıdan ana firma seçin"
+              checked={isSubContractorChecked}
+              onChange={(e) => {
+                const checked = e.currentTarget.checked;
+                setIsSubContractorChecked(checked);
+                if (!checked) setValue('parentId', null);
+              }}
+            />
+            {isSubContractorChecked && (
+              <Select
+                label="Bağlı Olduğu Ana Firma"
+                placeholder="Ana firma seçin"
+                data={mainCompanyOptions}
+                value={watch('parentId') ?? null}
+                onChange={(v) => setValue('parentId', v === '' ? null : v)}
+                clearable
+                required={isSubContractorChecked}
+              />
+            )}
             <TextInput
               label={t('company.form.firmaUnvani')}
               placeholder={t('company.form.firmaUnvani')}
@@ -302,6 +342,18 @@ export function CompanyListPage() {
       return true;
     });
   }, [companies, filterStatus, filterCity, filterDistrict]);
+
+  /** Main companies first, then each main's sub-contractors (indented), for table display. */
+  const hierarchyRows = useMemo(() => {
+    const mains = filteredCompanies.filter(isMainCompany);
+    const result: Company[] = [];
+    for (const main of mains) {
+      result.push(main);
+      const subs = filteredCompanies.filter((c) => c.parentId === main.id);
+      for (const sub of subs) result.push(sub);
+    }
+    return result;
+  }, [filteredCompanies]);
 
   const handleAddClick = () => {
     setEditingCompany(null);
@@ -634,9 +686,16 @@ export function CompanyListPage() {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {filteredCompanies.map((c) => (
+              {hierarchyRows.map((c) => (
                 <Table.Tr key={c.id}>
-                  <Table.Td>{c.name}</Table.Td>
+                  <Table.Td style={{ paddingLeft: c.parentId ? 32 : undefined }}>
+                    <Group gap="xs" wrap="nowrap">
+                      {c.parentId ? (
+                        <IconArrowDownRight size={16} style={{ flexShrink: 0 }} />
+                      ) : null}
+                      <Text size="sm">{c.name}</Text>
+                    </Group>
+                  </Table.Td>
                   <Table.Td>{c.sgkSicilNo}</Table.Td>
                   <Table.Td>
                     {c.dangerClass ? (

@@ -15,10 +15,11 @@ import {
   ActionIcon,
   Badge,
 } from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconTrash, IconLockOff } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconLockOff, IconEdit } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { useAuthStore, type User, type UserRole } from '@shared/stores/authStore';
+import { useAuthStore, type User, type UserRole, isUserExpired } from '@shared/stores/authStore';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   Admin: 'Admin',
@@ -57,9 +58,11 @@ export function UserManagementPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const users = useAuthStore((s) => s.users);
   const addUser = useAuthStore((s) => s.addUser);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const deleteUser = useAuthStore((s) => s.deleteUser);
 
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -67,11 +70,13 @@ export function UserManagementPage() {
     email: '',
     password: '',
     role: 'GenelKullanici' as UserRole,
+    accountExpiryDate: null as Date | null,
   });
 
   const isAdmin = currentUser?.role === 'Admin';
 
   const openAdd = () => {
+    setEditingUser(null);
     setForm({
       firstName: '',
       lastName: '',
@@ -79,6 +84,21 @@ export function UserManagementPage() {
       email: '',
       password: '',
       role: 'GenelKullanici',
+      accountExpiryDate: null,
+    });
+    openModal();
+  };
+
+  const openEdit = (user: User) => {
+    setEditingUser(user);
+    setForm({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone ?? '',
+      email: user.email,
+      password: '',
+      role: user.role,
+      accountExpiryDate: user.accountExpiryDate ? new Date(user.accountExpiryDate) : null,
     });
     openModal();
   };
@@ -93,6 +113,25 @@ export function UserManagementPage() {
       notifications.show({ title: 'Hata', message: 'Geçerli bir email adresi girin.', color: 'red' });
       return;
     }
+    if (editingUser) {
+      const ok = updateUser(editingUser.id, {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        role: form.role,
+        accountExpiryDate: form.accountExpiryDate ? form.accountExpiryDate.toISOString().slice(0, 10) : null,
+        ...(form.password.length >= 4 ? { password: form.password } : {}),
+      });
+      if (ok) {
+        notifications.show({ title: 'Güncellendi', message: 'Kullanıcı güncellendi.', color: 'green' });
+        closeModal();
+        setEditingUser(null);
+      } else {
+        notifications.show({ title: 'Hata', message: 'Güncellenemedi.', color: 'red' });
+      }
+      return;
+    }
     if (!form.password || form.password.length < 4) {
       notifications.show({ title: 'Hata', message: 'Şifre en az 4 karakter olmalı.', color: 'red' });
       return;
@@ -104,6 +143,7 @@ export function UserManagementPage() {
       email: form.email.trim(),
       password: form.password,
       role: form.role,
+      accountExpiryDate: form.accountExpiryDate ? form.accountExpiryDate.toISOString().slice(0, 10) : null,
     });
     if (added) {
       notifications.show({ title: 'Kullanıcı eklendi', message: `${form.email} listeye eklendi.`, color: 'green' });
@@ -150,7 +190,7 @@ export function UserManagementPage() {
         </Group>
 
         <Paper withBorder>
-          <Table.ScrollContainer minWidth={700}>
+          <Table.ScrollContainer minWidth={800}>
             <Table striped highlightOnHover>
               <Table.Thead>
                 <Table.Tr>
@@ -158,13 +198,14 @@ export function UserManagementPage() {
                   <Table.Th>Email (Kullanıcı Adı)</Table.Th>
                   <Table.Th>Telefon</Table.Th>
                   <Table.Th>Rol</Table.Th>
+                  <Table.Th>Durum</Table.Th>
                   <Table.Th>İşlemler</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 {users.length === 0 ? (
                   <Table.Tr>
-                    <Table.Td colSpan={5}>
+                    <Table.Td colSpan={6}>
                       <MantineText size="sm" c="dimmed" ta="center" py="md">
                         Henüz kullanıcı yok.
                       </MantineText>
@@ -182,11 +223,23 @@ export function UserManagementPage() {
                         </Badge>
                       </Table.Td>
                       <Table.Td>
-                        {u.role !== 'Admin' && (
-                          <ActionIcon color="red" variant="subtle" onClick={() => handleDelete(u)} title="Sil">
-                            <IconTrash size={16} />
-                          </ActionIcon>
+                        {isUserExpired(u) ? (
+                          <Badge color="red" size="sm">Süresi Dolmuş</Badge>
+                        ) : (
+                          <Badge variant="light" color="green" size="sm">Aktif</Badge>
                         )}
+                      </Table.Td>
+                      <Table.Td>
+                        <Group gap="xs">
+                          <ActionIcon variant="subtle" onClick={() => openEdit(u)} title="Düzenle">
+                            <IconEdit size={16} />
+                          </ActionIcon>
+                          {u.role !== 'Admin' && (
+                            <ActionIcon color="red" variant="subtle" onClick={() => handleDelete(u)} title="Sil">
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          )}
+                        </Group>
                       </Table.Td>
                     </Table.Tr>
                   ))
@@ -197,40 +250,46 @@ export function UserManagementPage() {
         </Paper>
       </Stack>
 
-      <Modal opened={modalOpened} onClose={closeModal} title="Yeni Kullanıcı" size="md">
+      <Modal
+        opened={modalOpened}
+        onClose={() => { closeModal(); setEditingUser(null); }}
+        title={editingUser ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'}
+        size="md"
+      >
         <Stack gap="sm">
           <TextInput
             label="İsim"
             placeholder="Ad"
             value={form.firstName}
-            onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+            onChange={(e) => setForm((f) => ({ ...f, firstName: e.currentTarget.value }))}
           />
           <TextInput
             label="Soyisim"
             placeholder="Soyad"
             value={form.lastName}
-            onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+            onChange={(e) => setForm((f) => ({ ...f, lastName: e.currentTarget.value }))}
           />
           <TextInput
             label="Telefon"
             placeholder="Telefon"
             value={form.phone}
-            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            onChange={(e) => setForm((f) => ({ ...f, phone: e.currentTarget.value }))}
           />
           <TextInput
             label="Email (Kullanıcı Adı)"
             placeholder="ornek@firma.com"
             type="email"
             value={form.email}
-            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.currentTarget.value }))}
             required
+            disabled={!!editingUser}
           />
           <PasswordInput
             label="Şifre"
-            placeholder="Şifre"
+            placeholder={editingUser ? 'Değiştirmek için doldurun (opsiyonel)' : 'Şifre'}
             value={form.password}
-            onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-            required
+            onChange={(e) => setForm((f) => ({ ...f, password: e.currentTarget.value }))}
+            required={!editingUser}
           />
           <Select
             label="Rol"
@@ -242,8 +301,16 @@ export function UserManagementPage() {
             value={form.role}
             onChange={(v) => v && setForm((f) => ({ ...f, role: v as UserRole }))}
           />
+          <DatePickerInput
+            label="Hesap Geçerlilik Tarihi"
+            placeholder="Tarih seçin (boş bırakılırsa süresiz)"
+            valueFormat="DD.MM.YYYY"
+            value={form.accountExpiryDate}
+            onChange={(d) => setForm((f) => ({ ...f, accountExpiryDate: d }))}
+            clearable
+          />
           <Group justify="flex-end" mt="md">
-            <Button variant="default" onClick={closeModal}>
+            <Button variant="default" onClick={() => { closeModal(); setEditingUser(null); }}>
               İptal
             </Button>
             <Button onClick={handleSave}>Kaydet</Button>

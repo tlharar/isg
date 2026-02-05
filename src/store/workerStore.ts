@@ -2,8 +2,23 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { WorkerFormValues } from '@domains/worker/schemas/workerSchema';
 
+/** For 'Yetkilendirme' e.g. 'Usta Başı', 'Çalışan Temsilcisi' */
+export type WorkerRoleCode = 'Usta Basi' | 'Calisan Temsilcisi' | 'Acil Durum Eki';
+
+/** For 'Aktif Vize' (visa status) */
+export interface WorkerVisaStatus {
+  code: string;
+  expiry: Date | string;
+}
+
 export interface Worker extends WorkerFormValues {
   id: string;
+  /** For Yetkilendirme */
+  roles?: string[];
+  /** For Aktif Vize Sorgulama */
+  visaStatus?: WorkerVisaStatus;
+  /** History of companies this worker is/was assigned to */
+  assignedCompanyIds?: string[];
 }
 
 /** Kept outside store for reuse (e.g. loadData). */
@@ -19,7 +34,7 @@ function generateId(): string {
 interface WorkerState {
   workers: Worker[];
   addWorker: (data: WorkerFormValues) => Worker;
-  updateWorker: (id: string, data: WorkerFormValues) => void;
+  updateWorker: (id: string, data: Partial<Omit<Worker, 'id'>>) => void;
   deleteWorker: (id: string) => void;
   getWorkerById: (id: string) => Worker | undefined;
   loadData: (isDemo: boolean) => void;
@@ -36,10 +51,21 @@ export const useWorkerStore = create<WorkerState>()(
         return worker;
       },
 
-      updateWorker: (id: string, data: WorkerFormValues) => {
+      updateWorker: (id: string, data: Partial<Omit<Worker, 'id'>>) => {
         set((state) => ({
           workers: state.workers.map((w) =>
-            w.id === id ? { ...data, id: w.id, companyId: data.companyId ?? w.companyId } : w
+            w.id === id
+              ? {
+                  ...w,
+                  ...data,
+                  id: w.id,
+                  companyId: data.companyId ?? w.companyId,
+                  subContractorId: data.subContractorId ?? w.subContractorId,
+                  roles: data.roles !== undefined ? data.roles : w.roles,
+                  visaStatus: data.visaStatus !== undefined ? data.visaStatus : w.visaStatus,
+                  assignedCompanyIds: data.assignedCompanyIds !== undefined ? data.assignedCompanyIds : w.assignedCompanyIds,
+                }
+              : w
           ),
         }));
       },

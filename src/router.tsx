@@ -25,6 +25,12 @@ import { HealthPage } from '@domains/health/pages/HealthPage';
 import { WritePrescriptionPage } from '@domains/health/pages/WritePrescriptionPage';
 import { DrugListPage } from '@domains/health/pages/DrugListPage';
 import { PrescriptionListPage } from '@domains/health/pages/PrescriptionListPage';
+import { PolyclinicPage } from '@domains/health/pages/PolyclinicPage';
+import { VaccineListPage } from '@domains/health/pages/VaccineListPage';
+import { AppointmentPage } from '@domains/health/pages/AppointmentPage';
+import { LabListPage } from '@domains/health/pages/LabListPage';
+import { PharmacyPage } from '@domains/health/pages/PharmacyPage';
+import { PatientDetailPage } from '@domains/patient/pages/PatientDetailPage';
 import { IncidentPage } from '@domains/incident/pages/IncidentPage';
 import { PpePage } from '@domains/ppe/pages/PpePage';
 import { EquipmentListPage } from '@domains/ppe/pages/EquipmentListPage';
@@ -141,12 +147,13 @@ export const router = createBrowserRouter([
               { path: 'prescription/medication-list', element: <DrugListPage /> },
               { path: 'drugs', element: <DrugListPage /> },
               { path: 'prescriptions', element: <PrescriptionListPage /> },
-              { path: 'examination/polyclinic', element: <PlaceholderPage titleKey="nav.healthExaminationPolyclinic" /> },
+              { path: 'patients/:patientId', element: <PatientDetailPage /> },
+              { path: 'examination/polyclinic', element: <PolyclinicPage /> },
               { path: 'examination/entry-periodic', element: <HealthPage /> },
-              { path: 'examination/vaccination', element: <PlaceholderPage titleKey="nav.healthExaminationVaccination" /> },
-              { path: 'examination/appointments', element: <PlaceholderPage titleKey="nav.healthExaminationAppointments" /> },
-              { path: 'other/tests', element: <PlaceholderPage titleKey="nav.healthOtherTests" /> },
-              { path: 'other/medicine-cabinet', element: <PlaceholderPage titleKey="nav.healthOtherMedicineCabinet" /> },
+              { path: 'examination/vaccination', element: <VaccineListPage /> },
+              { path: 'examination/appointments', element: <AppointmentPage /> },
+              { path: 'other/tests', element: <LabListPage /> },
+              { path: 'other/medicine-cabinet', element: <PharmacyPage /> },
             ],
           },
           {

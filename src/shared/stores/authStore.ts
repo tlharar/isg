@@ -18,7 +18,20 @@ export interface User {
   lastName: string;
   phone: string;
   role: UserRole;
+  /** If set and today > this date, user is treated as passive (cannot login, shown as expired). */
+  accountExpiryDate?: string | null;
 }
+
+/** Returns true if the user account is expired (passive). */
+export function isUserExpired(user: User): boolean {
+  if (!user.accountExpiryDate) return false;
+  const expiry = new Date(user.accountExpiryDate);
+  return !Number.isNaN(expiry.getTime()) && new Date() > expiry;
+}
+
+/** Error message shown when login is rejected due to expired account. */
+export const ACCOUNT_EXPIRED_MESSAGE =
+  'Hesabınızın kullanım süresi dolmuştur. Lütfen sistem yöneticisi ile iletişime geçiniz.';
 
 function generateUserId(): string {
   return `user-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -44,6 +57,7 @@ interface AuthState {
   login: (email: string, password: string) => User | null;
   logout: () => void;
   addUser: (data: Omit<User, 'id'>) => User | null;
+  updateUser: (id: string, data: Partial<Omit<User, 'id'>>) => boolean;
   deleteUser: (id: string) => boolean;
   getUserById: (id: string) => User | undefined;
   changePassword: (newPassword: string) => boolean;
@@ -60,11 +74,12 @@ export const useAuthStore = create<AuthState>()(
         const user = get().users.find(
           (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
         );
-        if (user) {
-          set({ currentUser: user });
-          return user;
+        if (!user) return null;
+        if (isUserExpired(user)) {
+          throw new Error(ACCOUNT_EXPIRED_MESSAGE);
         }
-        return null;
+        set({ currentUser: user });
+        return user;
       },
 
       logout: () => set({ currentUser: null }),
@@ -77,9 +92,23 @@ export const useAuthStore = create<AuthState>()(
         const user: User = {
           ...data,
           id: generateUserId(),
+          accountExpiryDate: data.accountExpiryDate ?? null,
         };
         set((s) => ({ users: [user, ...s.users] }));
         return user;
+      },
+
+      updateUser: (id, data) => {
+        const current = get().currentUser;
+        if (!current || current.role !== 'Admin') return false;
+        const target = get().users.find((u) => u.id === id);
+        if (!target) return false;
+        const updated: User = { ...target, ...data };
+        set((s) => ({
+          users: s.users.map((u) => (u.id === id ? updated : u)),
+          currentUser: s.currentUser?.id === id ? updated : s.currentUser,
+        }));
+        return true;
       },
 
       deleteUser: (id: string) => {

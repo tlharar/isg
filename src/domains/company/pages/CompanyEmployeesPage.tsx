@@ -14,15 +14,21 @@ import {
   Badge,
   Modal,
 } from '@mantine/core';
+import { modals } from '@mantine/modals';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconDownload, IconDots, IconEdit, IconTrash, IconKey, IconBuilding, IconCertificate, IconLink, IconUpload } from '@tabler/icons-react';
+import { IconPlus, IconDownload, IconDots, IconEdit, IconTrash, IconKey, IconBuilding, IconCertificate, IconLink, IconUpload, IconVaccine } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@shared/i18n';
 import { useExportExcel } from '@shared/utils';
 import type { WorkerFormValues } from '@domains/worker/schemas/workerSchema';
 import { useWorkerStore, type Worker } from '@store/workerStore';
+import { useCompanyStore } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
 import { EmployeeModal } from '@domains/company/components/EmployeeModal';
+import { WorkerAuthModal } from '@domains/worker/components/WorkerAuthModal';
+import { WorkerCompaniesModal } from '@domains/worker/components/WorkerCompaniesModal';
+import { WorkerVisaModal } from '@domains/worker/components/WorkerVisaModal';
 
 /** Turkish column headers for the Excel template */
 const TURKISH_TEMPLATE_COLUMNS = [
@@ -125,12 +131,17 @@ function mappedRowToWorkerFormValues(mapped: Record<string, string>, companyId: 
 /** Company Employees (Firma Çalışanları): full Worker CRUD, Excel import, workerStore */
 export function CompanyEmployeesPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
   const { exportTableToExcel } = useExportExcel();
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
   const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
+  const [authModalWorker, setAuthModalWorker] = useState<Worker | null>(null);
+  const [companiesModalWorker, setCompaniesModalWorker] = useState<Worker | null>(null);
+  const [visaModalWorker, setVisaModalWorker] = useState<Worker | null>(null);
 
+  const getCompanyById = useCompanyStore((s) => s.getCompanyById);
   const allWorkers = useWorkerStore((state) => state.workers);
   const workers = selectedCompanyId
     ? allWorkers.filter((w) => w.companyId === selectedCompanyId)
@@ -138,6 +149,14 @@ export function CompanyEmployeesPage() {
   const addWorker = useWorkerStore((state) => state.addWorker);
   const updateWorker = useWorkerStore((state) => state.updateWorker);
   const deleteWorker = useWorkerStore((state) => state.deleteWorker);
+
+  function getCompanySubContractorLabel(w: Worker): string {
+    const company = w.companyId ? getCompanyById(w.companyId) : null;
+    const companyName = company?.name ?? '—';
+    if (!w.subContractorId || !company?.subContractors?.length) return companyName;
+    const sub = company.subContractors.find((s) => s.id === w.subContractorId);
+    return sub ? `${companyName} / ${sub.name}` : companyName;
+  }
 
   const handleDownloadTemplate = () => {
     const rows: TurkishTemplateRow[] = workers.length > 0
@@ -161,15 +180,37 @@ export function CompanyEmployeesPage() {
   };
 
   const handleDeleteClick = (worker: Worker) => {
-    if (window.confirm(t('worker.deleteConfirm'))) {
-      deleteWorker(worker.id);
+    modals.openConfirmModal({
+      title: t('worker.actions.delete'),
+      children: <Text size="sm">{t('worker.deleteConfirm')}</Text>,
+      labels: { confirm: t('common.delete'), cancel: t('common.cancel') },
+      confirmProps: { color: 'red' },
+      onConfirm: () => deleteWorker(worker.id),
+    });
+  };
+
+  const handleAuthSave = (roles: string[]) => {
+    if (authModalWorker) {
+      updateWorker(authModalWorker.id, { roles });
+      setAuthModalWorker(null);
     }
+  };
+
+  const handlePasswordLinkClick = (worker: Worker) => {
+    const url = `https://app.com/reset-pass?user=${worker.id}`;
+    void navigator.clipboard.writeText(url);
+    notifications.show({
+      title: 'Bağlantı kopyalandı',
+      message: 'Şifre oluşturma linki panoya kopyalandı.',
+      color: 'green',
+    });
   };
 
   const handleModalSubmit = (data: WorkerFormValues) => {
     const payload = {
       ...data,
       companyId: data.companyId ?? (editingWorker ? editingWorker.companyId : selectedCompanyId ?? undefined),
+      subContractorId: data.subContractorId ?? (editingWorker ? editingWorker.subContractorId : undefined),
     };
     if (editingWorker) {
       updateWorker(editingWorker.id, payload);
@@ -299,6 +340,7 @@ export function CompanyEmployeesPage() {
               <Table.Th>{t('worker.form.idNumber')}</Table.Th>
               <Table.Th>{t('worker.form.email')}</Table.Th>
               <Table.Th>{t('worker.table.jobTitle')}</Table.Th>
+              <Table.Th>{t('worker.table.company')}</Table.Th>
               <Table.Th style={{ width: 50 }} />
             </Table.Tr>
           </Table.Thead>
@@ -309,6 +351,9 @@ export function CompanyEmployeesPage() {
                 <Table.Td>{w.idNumber}</Table.Td>
                 <Table.Td>{w.email}</Table.Td>
                 <Table.Td>{w.jobTitle ?? '—'}</Table.Td>
+                <Table.Td>
+                  <Text size="sm">{getCompanySubContractorLabel(w)}</Text>
+                </Table.Td>
                 <Table.Td>
                   <Menu shadow="md" width={220} position="bottom-end">
                     <Menu.Target>
@@ -331,10 +376,37 @@ export function CompanyEmployeesPage() {
                         {t('worker.actions.delete')}
                       </Menu.Item>
                       <Menu.Divider />
-                      <Menu.Item leftSection={<IconKey size={14} />}>{t('worker.actions.authorization')}</Menu.Item>
-                      <Menu.Item leftSection={<IconBuilding size={14} />}>{t('worker.actions.companies')}</Menu.Item>
-                      <Menu.Item leftSection={<IconCertificate size={14} />}>{t('worker.actions.activeVisaInquiry')}</Menu.Item>
-                      <Menu.Item leftSection={<IconLink size={14} />}>{t('worker.actions.passwordCreationLink')}</Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconKey size={14} />}
+                        onClick={() => setAuthModalWorker(w)}
+                      >
+                        {t('worker.actions.authorization')}
+                      </Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconBuilding size={14} />}
+                        onClick={() => setCompaniesModalWorker(w)}
+                      >
+                        {t('worker.actions.companies')}
+                      </Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconCertificate size={14} />}
+                        onClick={() => setVisaModalWorker(w)}
+                      >
+                        {t('worker.actions.activeVisaInquiry')}
+                      </Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconLink size={14} />}
+                        onClick={() => handlePasswordLinkClick(w)}
+                      >
+                        {t('worker.actions.passwordCreationLink')}
+                      </Menu.Item>
+                      <Menu.Divider />
+                      <Menu.Item
+                        leftSection={<IconVaccine size={14} />}
+                        onClick={() => navigate(`/health/examination/vaccination?workerId=${w.id}`)}
+                      >
+                        Aşı geçmişi
+                      </Menu.Item>
                     </Menu.Dropdown>
                   </Menu>
                 </Table.Td>
@@ -359,6 +431,23 @@ export function CompanyEmployeesPage() {
           t={t}
         />
       </Modal>
+
+      <WorkerAuthModal
+        opened={!!authModalWorker}
+        onClose={() => setAuthModalWorker(null)}
+        worker={authModalWorker}
+        onSave={handleAuthSave}
+      />
+      <WorkerCompaniesModal
+        opened={!!companiesModalWorker}
+        onClose={() => setCompaniesModalWorker(null)}
+        worker={companiesModalWorker}
+      />
+      <WorkerVisaModal
+        opened={!!visaModalWorker}
+        onClose={() => setVisaModalWorker(null)}
+        worker={visaModalWorker}
+      />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Title,
   Text,
@@ -10,14 +10,18 @@ import {
   ActionIcon,
   Menu,
   Badge,
+  Modal,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconDots, IconEdit, IconTrash, IconFileText, IconCloudUpload, IconAmbulance, IconPill } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
+import { useWorkerStore } from '@store/workerStore';
+import { useCompanyStore } from '@store/companyStore';
 import { useHealthStore, type Examination } from '../stores/healthStore';
 import { HealthModal } from '../components/HealthModal';
+import { Ek2PrintView, type Ek2WorkerData } from '../components/Ek2PrintView';
 
 function formatDate(iso: string): string {
   if (!iso) return '—';
@@ -31,8 +35,12 @@ export function HealthPage() {
   const examinations = useHealthStore((s) => s.examinations);
   const deleteExamination = useHealthStore((s) => s.deleteExamination);
   const markSentToIbys = useHealthStore((s) => s.markSentToIbys);
+  const getWorkerById = useWorkerStore((s) => s.getWorkerById);
+  const getCompanyById = useCompanyStore((s) => s.getCompanyById);
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [printExam, setPrintExam] = useState<Examination | null>(null);
+  const [printModalOpened, { open: openPrintModal, close: closePrintModal }] = useDisclosure(false);
 
   const handleNewExam = () => {
     setEditingId(null);
@@ -58,13 +66,31 @@ export function HealthPage() {
     });
   };
 
-  const handleDownloadEk2 = () => {
-    notifications.show({
-      title: 'EK-2 Formu indiriliyor...',
-      message: 'PDF hazırlanıyor.',
-      color: 'blue',
-    });
+  const handleDownloadEk2 = (exam: Examination) => {
+    setPrintExam(exam);
+    openPrintModal();
   };
+
+  const handleClosePrintModal = () => {
+    closePrintModal();
+    setPrintExam(null);
+  };
+
+  const handlePrintEk2 = () => {
+    window.print();
+  };
+
+  const printWorkerData: Ek2WorkerData | null = useMemo(() => {
+    if (!printExam) return null;
+    const worker = getWorkerById(printExam.employeeId);
+    const company = printExam.companyId ? getCompanyById(printExam.companyId) : null;
+    return {
+      name: printExam.employeeName || worker?.nameSurname || '—',
+      tckn: worker?.idNumber ?? '',
+      jobTitle: worker?.jobTitle ?? '',
+      companyName: company?.name ?? '',
+    };
+  }, [printExam, getWorkerById, getCompanyById]);
 
   const handleSendToIbys = (exam: Examination) => {
     markSentToIbys(exam.id);
@@ -176,7 +202,7 @@ export function HealthPage() {
                             <Menu.Divider />
                             <Menu.Item
                               leftSection={<IconFileText size={14} />}
-                              onClick={handleDownloadEk2}
+                              onClick={() => handleDownloadEk2(e)}
                             >
                               EK-2 İndir
                             </Menu.Item>
@@ -217,6 +243,24 @@ export function HealthPage() {
         examinationId={editingId}
         onSaved={() => {}}
       />
+
+      <Modal
+        opened={printModalOpened}
+        onClose={handleClosePrintModal}
+        title="EK-2 İşe Giriş / Periyodik Muayene Formu"
+        size="lg"
+        styles={{ body: { padding: 0 } }}
+      >
+        {printExam && printWorkerData && (
+          <Ek2PrintView
+            examData={printExam}
+            workerData={printWorkerData}
+            showActions
+            onPrint={handlePrintEk2}
+            onClose={handleClosePrintModal}
+          />
+        )}
+      </Modal>
     </>
   );
 }

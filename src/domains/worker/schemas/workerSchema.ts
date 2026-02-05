@@ -17,6 +17,7 @@ export const workerFormSchema = z
     visaDate: dateSchema.optional(),
     jobTitle: z.string().optional(),
     companyId: z.string().optional(),
+    subContractorId: z.string().optional(),
   })
   .refine(
     (data) => {

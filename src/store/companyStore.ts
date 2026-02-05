@@ -7,6 +7,14 @@ export type CompanyStatus = 'active' | 'passive';
 /** Tehlike Sınıfı (OHS hazard class) */
 export type DangerClass = 'Az Tehlikeli' | 'Tehlikeli' | 'Çok Tehlikeli';
 
+/** Alt İşveren (sub-contractor) under a company */
+export interface SubContractor {
+  id: string;
+  name: string;
+  sgkNumber: string;
+  contactPerson: string;
+}
+
 export interface Company {
   id: string;
   /** Firma Unvanı */
@@ -33,10 +41,31 @@ export interface Company {
   employeeCountSystem: number;
   /** Active employee count from ISG Katip */
   employeeCountIsgKatip: number;
+  /** Alt İşverenler (sub-contractors) under this company - legacy simple list */
+  subContractors?: SubContractor[];
+  /**
+   * Parent company ID. If null/undefined, this is a Main Company.
+   * If set, this company is a Sub-contractor (Alt İşveren) of the parent.
+   */
+  parentId?: string | null;
+}
+
+/** Returns true if the company is a main company (no parent). */
+export function isMainCompany(c: Company): boolean {
+  return c.parentId == null || c.parentId === '';
+}
+
+/** Returns true if the company is a sub-contractor (has parent). */
+export function isSubContractorCompany(c: Company): boolean {
+  return !isMainCompany(c);
 }
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function generateSubContractorId(): string {
+  return `sub-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export type { CompanyFormValues };
@@ -60,6 +89,8 @@ const MOCK_COMPANIES: Company[] = [
     status: 'active',
     employeeCountSystem: 45,
     employeeCountIsgKatip: 42,
+    subContractors: [],
+    parentId: null,
   },
   {
     id: 'c2',
@@ -78,6 +109,8 @@ const MOCK_COMPANIES: Company[] = [
     status: 'active',
     employeeCountSystem: 120,
     employeeCountIsgKatip: 118,
+    subContractors: [],
+    parentId: null,
   },
   {
     id: 'c3',
@@ -96,8 +129,12 @@ const MOCK_COMPANIES: Company[] = [
     status: 'passive',
     employeeCountSystem: 0,
     employeeCountIsgKatip: 0,
+    subContractors: [],
+    parentId: null,
   },
 ];
+
+export type SubContractorInput = Omit<SubContractor, 'id'>;
 
 interface CompanyState {
   companies: Company[];
@@ -106,6 +143,12 @@ interface CompanyState {
   updateCompany: (id: string, data: CompanyFormValues) => void;
   deleteCompany: (id: string) => void;
   getCompanyById: (id: string) => Company | undefined;
+  /** Main companies only (parentId null/undefined). */
+  getMainCompanies: () => Company[];
+  /** Sub-contractor companies that belong to the given parent company. */
+  getSubContractorCompanies: (parentId: string) => Company[];
+  addSubContractor: (companyId: string, subContractor: SubContractorInput) => void;
+  removeSubContractor: (companyId: string, subContractorId: string) => void;
   loadData: (isDemo: boolean) => void;
 }
 
@@ -120,6 +163,8 @@ export const useCompanyStore = create<CompanyState>()(
           id: generateId(),
           employeeCountSystem: 0,
           employeeCountIsgKatip: 0,
+          subContractors: [],
+          parentId: data.parentId ?? null,
         };
         set((state) => ({ companies: [...state.companies, company] }));
         return company;
@@ -131,6 +176,7 @@ export const useCompanyStore = create<CompanyState>()(
           id: generateId(),
           employeeCountSystem: 0,
           employeeCountIsgKatip: 0,
+          subContractors: [],
         }));
         set((state) => ({ companies: [...state.companies, ...newCompanies] }));
       },
@@ -138,7 +184,7 @@ export const useCompanyStore = create<CompanyState>()(
       updateCompany: (id: string, data: CompanyFormValues) => {
         set((state) => ({
           companies: state.companies.map((c) =>
-            c.id === id ? { ...c, ...data } : c
+            c.id === id ? { ...c, ...data, parentId: data.parentId ?? c.parentId } : c
           ),
         }));
       },
@@ -148,6 +194,39 @@ export const useCompanyStore = create<CompanyState>()(
       },
 
       getCompanyById: (id: string) => get().companies.find((c) => c.id === id),
+
+      getMainCompanies: () =>
+        get().companies.filter((c) => c.parentId == null || c.parentId === ''),
+
+      getSubContractorCompanies: (parentId: string) =>
+        get().companies.filter((c) => c.parentId === parentId),
+
+      addSubContractor: (companyId, subContractor) => {
+        const sub: SubContractor = {
+          ...subContractor,
+          id: generateSubContractorId(),
+        };
+        set((state) => ({
+          companies: state.companies.map((c) =>
+            c.id === companyId
+              ? { ...c, subContractors: [...(c.subContractors ?? []), sub] }
+              : c
+          ),
+        }));
+      },
+
+      removeSubContractor: (companyId, subContractorId) => {
+        set((state) => ({
+          companies: state.companies.map((c) =>
+            c.id === companyId
+              ? {
+                  ...c,
+                  subContractors: (c.subContractors ?? []).filter((s) => s.id !== subContractorId),
+                }
+              : c
+          ),
+        }));
+      },
 
       loadData: (isDemo) => {
         if (isDemo) set({ companies: [...MOCK_COMPANIES] });

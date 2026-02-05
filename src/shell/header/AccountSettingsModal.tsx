@@ -1,16 +1,13 @@
 import { Modal, Stack, TextInput, Button, Group, Alert, Text } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
+import { useTranslation } from '@shared/i18n';
 import { useAuthStore, type UserRole } from '@shared/stores/authStore';
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  Admin: 'Admin',
-  Hekim: 'Hekim',
-  IsgUzman: 'İSG Uzmanı',
-  GenelKullanici: 'Genel Kullanıcı',
-  DemoHekim: 'Demo Hekim',
-  DemoUzman: 'Demo Uzman',
-  DemoGenel: 'Demo Genel',
-};
+function getRoleLabel(role: UserRole, t: (key: string) => string): string {
+  const key = `shell.roles.${role}`;
+  const translated = t(key);
+  return translated !== key ? translated : role;
+}
 
 interface AccountSettingsModalProps {
   opened: boolean;
@@ -18,53 +15,52 @@ interface AccountSettingsModalProps {
 }
 
 export function AccountSettingsModal({ opened, onClose }: AccountSettingsModalProps) {
+  const { t } = useTranslation();
   const currentUser = useAuthStore((s) => s.currentUser);
 
-  const roleLabel = currentUser ? ROLE_LABELS[currentUser.role] ?? currentUser.role : '—';
+  const roleLabel = currentUser ? getRoleLabel(currentUser.role, t) : '—';
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Hesap Bilgileri" size="sm" centered>
+    <Modal opened={opened} onClose={onClose} title={t('shell.accountInfo')} size="sm" centered>
       <Stack gap="sm">
         <TextInput
-          label="Ad"
+          label={t('shell.firstName')}
           value={currentUser?.firstName ?? ''}
           readOnly
           variant="filled"
         />
         <TextInput
-          label="Soyad"
+          label={t('shell.lastName')}
           value={currentUser?.lastName ?? ''}
           readOnly
           variant="filled"
         />
         <TextInput
-          label="E-posta"
+          label={t('shell.email')}
           value={currentUser?.email ?? ''}
           readOnly
           variant="filled"
         />
         <TextInput
-          label="Telefon"
+          label={t('shell.phone')}
           value={currentUser?.phone ?? '—'}
           readOnly
           variant="filled"
         />
         <TextInput
-          label="Rol"
+          label={t('shell.role')}
           value={roleLabel}
           readOnly
           variant="filled"
         />
 
         <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light" mt="sm">
-          <Text size="sm">
-            Bilgilerinizde değişiklik yapmak için lütfen Sistem Yöneticisi ile iletişime geçiniz.
-          </Text>
+          <Text size="sm">{t('shell.accountContactAdmin')}</Text>
         </Alert>
 
         <Group justify="flex-end" mt="md">
           <Button variant="default" onClick={onClose}>
-            Kapat
+            {t('common.close')}
           </Button>
         </Group>
       </Stack>

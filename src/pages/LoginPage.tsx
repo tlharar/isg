@@ -20,12 +20,16 @@ export function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const user = login(email.trim(), password);
-    if (user) {
-      initializeUserData(user.role);
-      navigate('/dashboard');
-    } else {
-      setError(t('login.invalidCredentials'));
+    try {
+      const user = login(email.trim(), password);
+      if (user) {
+        initializeUserData(user.role);
+        navigate('/dashboard');
+      } else {
+        setError(t('login.invalidCredentials'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('login.invalidCredentials'));
     }
   };
 
