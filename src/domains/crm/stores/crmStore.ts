@@ -45,12 +45,6 @@ function noteId(): string {
   return `note-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function toDate(d: Date | string): Date {
-  if (d instanceof Date) return d;
-  const parsed = new Date(d);
-  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
-}
-
 interface CRMState {
   leads: CRMLead[];
   addLead: (lead: Omit<CRMLead, 'id' | 'createdAt' | 'updatedAt'>) => CRMLead;

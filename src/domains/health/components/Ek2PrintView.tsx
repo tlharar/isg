@@ -28,11 +28,6 @@ function mentions(text: string, ...keywords: string[]): boolean {
   return keywords.some((k) => t.includes(k.toLowerCase()));
 }
 
-const ANAMNESIS_ITEMS: { key: keyof Anamnesis; label: string }[] = [
-  { key: 'smoking', label: 'Sigara' },
-  { key: 'alcohol', label: 'Alkol' },
-];
-
 const HISTORY_ITEMS: { label: string; check: (a: Anamnesis) => boolean }[] = [
   { label: 'Diyabet', check: (a) => mentions(a.chronicIllnesses, 'diyabet', 'şeker') },
   { label: 'Hipertansiyon', check: (a) => mentions(a.chronicIllnesses, 'hipertansiyon', 'tansiyon') },

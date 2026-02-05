@@ -111,7 +111,7 @@ export function PolyclinicPage() {
       confirmProps: { color: 'red' },
       onConfirm: () => {
         deleteRecord(record.id);
-        notifications.show({ title: 'Kayıt silindi', color: 'gray' });
+        notifications.show({ title: 'Kayıt silindi', message: '', color: 'gray' });
       },
     });
   };

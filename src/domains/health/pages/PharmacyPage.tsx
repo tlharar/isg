@@ -26,7 +26,7 @@ import {
   type TransactionType,
 } from '../stores/pharmacyStore';
 import { useAuthStore } from '@shared/stores/authStore';
-import { PharmacyModal, CATEGORY_OPTIONS, UNIT_OPTIONS } from '../components/PharmacyModal';
+import { PharmacyModal } from '../components/PharmacyModal';
 
 const CATEGORY_LABELS: Record<MedicalCategory, string> = {
   DRUG: 'İlaç',

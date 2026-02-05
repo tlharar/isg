@@ -9,11 +9,11 @@ import {
   Tabs,
   Group,
 } from '@mantine/core';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { IconArrowLeft, IconFileDescription } from '@tabler/icons-react';
 import { useReportsByPatient } from '@store/patientStore';
 import { useWorkerStore } from '@store/workerStore';
-import { useMedicalReportStore, type MedicalReport } from '@store/medicalReportStore';
+import { type MedicalReport } from '@store/medicalReportStore';
 import { MedicalReportModal } from '@domains/health/components/MedicalReportModal';
 
 function formatDate(d: Date | string): string {
@@ -24,7 +24,6 @@ function formatDate(d: Date | string): string {
 
 export function PatientDetailPage() {
   const { patientId } = useParams<{ patientId: string }>();
-  const navigate = useNavigate();
   const reports = useReportsByPatient(patientId);
   const getWorkerById = useWorkerStore((s) => s.getWorkerById);
 

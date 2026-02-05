@@ -24,14 +24,6 @@ import {
   type PolyclinicVitals,
 } from '../stores/polyclinicStore';
 
-const defaultVitals: PolyclinicVitals = {
-  systolicBp: 0,
-  diastolicBp: 0,
-  pulse: 0,
-  temperature: 0,
-  weight: 0,
-};
-
 const OUTCOME_OPTIONS: { value: PolyclinicOutcome; label: string; color: string }[] = [
   { value: 'WORK', label: 'İşinin Başına Döndü', color: 'green' },
   { value: 'REST', label: 'İstirahat Verildi', color: 'orange' },
@@ -72,9 +64,9 @@ export function PolyclinicModal({ opened, onClose, record, onSaved }: Polyclinic
       outcome: 'WORK' as PolyclinicOutcome,
     },
     validate: {
-      workerId: (v) => (!v ? 'Personel seçin' : null),
-      date: (v) => (!v ? 'Tarih seçin' : null),
-      outcome: (v) => (!v ? 'Sonuç seçin' : null),
+      workerId: (v: string) => (!v ? 'Personel seçin' : null),
+      date: (v: Date | null) => (!v ? 'Tarih seçin' : null),
+      outcome: (v: string) => (!v ? 'Sonuç seçin' : null),
     },
   });
 

@@ -119,7 +119,7 @@ function openPrintWindow(report: MedicalReport, doctorName: string): void {
   w.focus();
   w.onload = () => {
     w.print();
-    w.afterprint = () => w.close();
+    w.onafterprint = () => w.close();
   };
 }
 
@@ -154,10 +154,10 @@ export function MedicalReportModal({
       checkupRequired: false,
     },
     validate: {
-      patientName: (v) => (!v?.trim() ? 'Hasta adı gerekli' : null),
-      startDate: (v) => (!v ? 'Başlangıç tarihi gerekli' : null),
-      endDate: (v) => (!v ? 'Bitiş tarihi gerekli' : null),
-      diagnosis: (v) => (!v?.trim() ? 'Tanı gerekli' : null),
+      patientName: (v: string) => (!v?.trim() ? 'Hasta adı gerekli' : null),
+      startDate: (v: Date | null) => (!v ? 'Başlangıç tarihi gerekli' : null),
+      endDate: (v: Date | null) => (!v ? 'Bitiş tarihi gerekli' : null),
+      diagnosis: (v: string) => (!v?.trim() ? 'Tanı gerekli' : null),
     },
   });
 

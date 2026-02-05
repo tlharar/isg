@@ -140,7 +140,7 @@ export function VaccineListPage() {
       confirmProps: { color: 'red' },
       onConfirm: () => {
         deleteVaccine(record.id);
-        notifications.show({ title: 'Kayıt silindi', color: 'gray' });
+        notifications.show({ title: 'Kayıt silindi', message: '', color: 'gray' });
       },
     });
   };

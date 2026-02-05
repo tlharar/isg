@@ -75,9 +75,9 @@ export function VaccineModal({
       notes: '',
     },
     validate: {
-      workerId: (v) => (!v ? 'Personel seçin' : null),
-      applicationDate: (v) => (!v ? 'İşlem tarihi seçin' : null),
-      notes: (v, values) =>
+      workerId: (v: string) => (!v ? 'Personel seçin' : null),
+      applicationDate: (v: Date | null) => (!v ? 'İşlem tarihi seçin' : null),
+      notes: (v: string, values: { status: string }) =>
         values.status === 'REFUSED' && !v?.trim() ? 'Red gerekçesi yazın' : null,
     },
   });

@@ -68,7 +68,7 @@ export function PharmacyModal({ opened, onClose, item, onSaved }: PharmacyModalP
       stockQuantity: (v: number | null) => (v == null || v < 0 ? 'Geçerli miktar girin' : null),
       unit: (v: string) => (!v ? 'Birim seçin' : null),
       criticalThreshold: (v: number | null) => (v == null || v < 0 ? 'Kritik seviye girin' : null),
-      expiryDate: (v: Date | null, values) => {
+      expiryDate: (v: Date | null) => {
         if (!v) return 'Son kullanma tarihi seçin';
         const today = todayStart();
         const exp = new Date(v);
