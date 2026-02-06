@@ -16,15 +16,16 @@ import {
 } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconDownload, IconDots, IconEdit, IconTrash, IconKey, IconBuilding, IconCertificate, IconLink, IconUpload, IconVaccine } from '@tabler/icons-react';
+import { IconPlus, IconDownload, IconDots, IconEdit, IconTrash, IconKey, IconBuilding, IconCertificate, IconLink, IconUpload, IconVaccine, IconMailForward } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@shared/i18n';
 import { useExportExcel } from '@shared/utils';
 import type { WorkerFormValues } from '@domains/worker/schemas/workerSchema';
-import { useWorkerStore, type Worker } from '@store/workerStore';
+import { useWorkerStore, type Worker, AUTO_ACCOUNT_JOB_TITLES } from '@store/workerStore';
 import { useCompanyStore } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
+import { useAuthStore, canManagerAddWorker, incrementManagerWorkerCount, decrementManagerWorkerCount } from '@shared/stores/authStore';
 import { EmployeeModal } from '@domains/company/components/EmployeeModal';
 import { WorkerAuthModal } from '@domains/worker/components/WorkerAuthModal';
 import { WorkerCompaniesModal } from '@domains/worker/components/WorkerCompaniesModal';
@@ -149,6 +150,11 @@ export function CompanyEmployeesPage() {
   const addWorker = useWorkerStore((state) => state.addWorker);
   const updateWorker = useWorkerStore((state) => state.updateWorker);
   const deleteWorker = useWorkerStore((state) => state.deleteWorker);
+  const resendWorkerCredentials = useWorkerStore((state) => state.resendWorkerCredentials);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const canAddWorker = canManagerAddWorker(currentUser);
+  const incrementManagerCount = useAuthStore((s) => s.incrementManagerWorkerCount);
+  const decrementManagerCount = useAuthStore((s) => s.decrementManagerWorkerCount);
 
   function getCompanySubContractorLabel(w: Worker): string {
     const company = w.companyId ? getCompanyById(w.companyId) : null;
@@ -185,7 +191,10 @@ export function CompanyEmployeesPage() {
       children: <Text size="sm">{t('worker.deleteConfirm')}</Text>,
       labels: { confirm: t('common.delete'), cancel: t('common.cancel') },
       confirmProps: { color: 'red' },
-      onConfirm: () => deleteWorker(worker.id),
+      onConfirm: () => {
+        deleteWorker(worker.id);
+        decrementManagerCount();
+      },
     });
   };
 
@@ -215,7 +224,25 @@ export function CompanyEmployeesPage() {
     if (editingWorker) {
       updateWorker(editingWorker.id, payload);
     } else {
+      if (!canAddWorker) {
+        notifications.show({
+          title: 'Limit aşıldı',
+          message: 'Kullanıcı limitiniz doldu. Yeni çalışan ekleyemezsiniz.',
+          color: 'red',
+        });
+        return;
+      }
       addWorker(payload);
+      incrementManagerCount();
+      const isAutoAccount =
+        payload.jobTitle && AUTO_ACCOUNT_JOB_TITLES.includes(payload.jobTitle as (typeof AUTO_ACCOUNT_JOB_TITLES)[number]);
+      if (isAutoAccount) {
+        notifications.show({
+          title: 'Başarılı',
+          message: 'Kullanıcı oluşturuldu ve bilgilendirme maili gönderildi.',
+          color: 'green',
+        });
+      }
     }
     closeModal();
     setEditingWorker(null);
@@ -242,6 +269,7 @@ export function CompanyEmployeesPage() {
         let addedCount = 0;
         let skippedCount = 0;
 
+        const authGet = useAuthStore.getState;
         jsonData.forEach((row) => {
           const mapped = mapRowToInternalKeys(row);
           const nameSurname = [mapped.name, mapped.surname].filter(Boolean).join(' ').trim();
@@ -250,8 +278,13 @@ export function CompanyEmployeesPage() {
             skippedCount++;
             return;
           }
+          if (!canManagerAddWorker(authGet().currentUser)) {
+            skippedCount++;
+            return;
+          }
           const payload = mappedRowToWorkerFormValues(mapped, selectedCompanyId);
           addWorker(payload);
+          incrementManagerCount();
           addedCount++;
         });
 
@@ -295,7 +328,7 @@ export function CompanyEmployeesPage() {
             <Button variant="light" leftSection={<IconDownload size={16} />} onClick={handleDownloadTemplate} size="sm">
               {t('worker.downloadTemplate')}
             </Button>
-            <Button leftSection={<IconPlus size={16} />} size="sm" onClick={handleAddClick}>
+            <Button leftSection={<IconPlus size={16} />} size="sm" onClick={handleAddClick} disabled={!canAddWorker} title={!canAddWorker ? 'Kullanıcı limitiniz doldu. Yeni çalışan ekleyemezsiniz.' : undefined}>
               {t('worker.addWorker')}
             </Button>
           </Group>
@@ -399,6 +432,20 @@ export function CompanyEmployeesPage() {
                         onClick={() => handlePasswordLinkClick(w)}
                       >
                         {t('worker.actions.passwordCreationLink')}
+                      </Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconMailForward size={14} />}
+                        onClick={() => {
+                          const ok = resendWorkerCredentials(w.id);
+                          if (ok) {
+                            notifications.show({ title: 'Başarılı', message: 'Şifre sıfırlandı ve mail tekrar gönderildi.', color: 'green' });
+                          } else {
+                            notifications.show({ title: 'Hata', message: 'Giriş bilgileri gönderilemedi. Kullanıcı hesabı bulunamadı veya yetkiniz yok.', color: 'red' });
+                          }
+                        }}
+                        title="Giriş Bilgilerini Tekrar Gönder"
+                      >
+                        Giriş Bilgilerini Tekrar Gönder
                       </Menu.Item>
                       <Menu.Divider />
                       <Menu.Item

@@ -17,10 +17,12 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm, Controller } from 'react-hook-form';
+import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
-import { useWorkerStore } from '@store/workerStore';
+import { useWorkerStore, AUTO_ACCOUNT_JOB_TITLES } from '@store/workerStore';
 import { useCompanyStore } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
+import { useAuthStore, canManagerAddWorker, incrementManagerWorkerCount } from '@shared/stores/authStore';
 import {
   useHealthStore,
   computeValidUntil,
@@ -88,6 +90,9 @@ export function HealthModal({
   const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
   const workers = useWorkerStore((s) => s.workers);
   const addWorker = useWorkerStore((s) => s.addWorker);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const canAddWorker = canManagerAddWorker(currentUser);
+  const incrementManagerCount = useAuthStore((s) => s.incrementManagerWorkerCount);
   const companies = useCompanyStore((s) => s.companies);
   const getCompanyById = useCompanyStore((s) => s.getCompanyById);
   const getExaminationById = useHealthStore((s) => s.getExaminationById);
@@ -224,7 +229,25 @@ export function HealthModal({
   };
 
   const handleQuickAddSubmit = (data: WorkerFormValues) => {
+    if (!canAddWorker) {
+      notifications.show({
+        title: 'Limit aşıldı',
+        message: 'Kullanıcı limitiniz doldu. Yeni çalışan ekleyemezsiniz.',
+        color: 'red',
+      });
+      return;
+    }
     const worker = addWorker(data);
+    incrementManagerCount();
+    const isAutoAccount =
+      data.jobTitle && AUTO_ACCOUNT_JOB_TITLES.includes(data.jobTitle as (typeof AUTO_ACCOUNT_JOB_TITLES)[number]);
+    if (isAutoAccount) {
+      notifications.show({
+        title: 'Başarılı',
+        message: 'Kullanıcı oluşturuldu ve bilgilendirme maili gönderildi.',
+        color: 'green',
+      });
+    }
     onEmployeeChange(worker.id);
     closeQuickAdd();
   };

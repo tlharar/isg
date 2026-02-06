@@ -13,7 +13,6 @@ import { CompanyLayout } from '@domains/company/layout/CompanyLayout';
 import { CompanyListPage } from '@domains/company/pages/CompanyListPage';
 import { CompanyEmployeesPage } from '@domains/company/pages/CompanyEmployeesPage';
 import { UnitsPage } from '@domains/company/pages/UnitsPage';
-import { SubcontractorsPage } from '@domains/company/pages/SubcontractorsPage';
 import { RepresentativePage } from '@domains/company/pages/RepresentativePage';
 import { MailGroupsPage } from '@domains/company/pages/MailGroupsPage';
 import { SafetyLayout } from '@domains/safety/layout/SafetyLayout';
@@ -49,6 +48,9 @@ import { PeriodicControlPage } from '@domains/safety/pages/PeriodicControlPage';
 import { BoardMeetingPage } from '@domains/safety/pages/BoardMeetingPage';
 import { SuggestionBookPage } from '@domains/safety/pages/SuggestionBookPage';
 import { ArchiveLayout } from '@domains/archive/layout/ArchiveLayout';
+import { DocumentListPage } from '@domains/archive/pages/DocumentListPage';
+import { AllWorkerDocumentsPage } from '@domains/archive/pages/AllWorkerDocumentsPage';
+import { CompanyDocumentsPage } from '@domains/archive/pages/CompanyDocumentsPage';
 import { ExtraLayout } from '@domains/extra/layout/ExtraLayout';
 import { CrmLayout } from '@domains/crm/layout/CrmLayout';
 import { LeadOsgbPage } from '@domains/crm/pages/LeadOsgbPage';
@@ -95,7 +97,6 @@ export const router = createBrowserRouter([
               { index: true, element: <CompanyListPage /> },
               { path: 'employees', element: <CompanyEmployeesPage /> },
               { path: 'units', element: <UnitsPage /> },
-              { path: 'subcontractors', element: <SubcontractorsPage /> },
               { path: 'representative', element: <RepresentativePage /> },
               { path: 'mail-groups', element: <MailGroupsPage /> },
             ],
@@ -161,9 +162,9 @@ export const router = createBrowserRouter([
             element: <ArchiveLayout />,
             children: [
               { index: true, element: <Navigate to="/archive/documents/ohs" replace /> },
-              { path: 'documents/ohs', element: <PlaceholderPage titleKey="nav.archiveDocsOhs" /> },
-              { path: 'documents/employee', element: <PlaceholderPage titleKey="nav.archiveDocsEmployee" /> },
-              { path: 'documents/company', element: <PlaceholderPage titleKey="nav.archiveDocsCompany" /> },
+              { path: 'documents/ohs', element: <DocumentListPage /> },
+              { path: 'documents/employee', element: <AllWorkerDocumentsPage /> },
+              { path: 'documents/company', element: <CompanyDocumentsPage /> },
               { path: 'reports/training', element: <PlaceholderPage titleKey="nav.reportsTraining" /> },
               { path: 'reports/accident-stats', element: <PlaceholderPage titleKey="nav.reportsAccidentStats" /> },
               { path: 'reports/prescription', element: <PlaceholderPage titleKey="nav.reportsPrescription" /> },

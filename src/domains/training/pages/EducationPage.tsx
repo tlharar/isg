@@ -15,7 +15,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconEdit, IconTrash, IconFileText, IconSettings } from '@tabler/icons-react';
+import { IconPlus, IconEdit, IconTrash, IconSettings, IconCertificate } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
@@ -26,8 +26,8 @@ import {
   type PlanTemplate,
 } from '@store/educationStore';
 import { useWorkerStore } from '@store/workerStore';
-import { createCertificatePdf } from '@shared/utils';
 import { EducationModal, type EducationFormValues } from '../components/EducationModal';
+import { CertificateModal } from '../components/CertificateModal';
 
 /**
  * Get status badge color
@@ -88,6 +88,8 @@ export function EducationPage() {
   const [modalOpened, setModalOpened] = useState(false);
   const [editingSession, setEditingSession] = useState<EducationSession | null>(null);
   const [templatesOpened, { open: openTemplates, close: closeTemplates }] = useDisclosure(false);
+  const [certificateModalOpened, { open: openCertificateModal, close: closeCertificateModal }] = useDisclosure(false);
+  const [certificateSession, setCertificateSession] = useState<EducationSession | null>(null);
   const [newTemplateName, setNewTemplateName] = useState('');
 
   const handleAddTemplate = () => {
@@ -127,53 +129,9 @@ export function EducationPage() {
     });
   };
 
-  const handleDownloadCertificate = (session: EducationSession) => {
-    if (session.attendees.length === 0) {
-      notifications.show({
-        title: t('education.certificateGenerating'),
-        message: t('education.noParticipants'),
-        color: 'yellow',
-      });
-      return;
-    }
-
-    notifications.show({
-      title: t('education.certificateGenerating'),
-      message: 'Sertifika hazırlanıyor...',
-      color: 'blue',
-      autoClose: 2000,
-    });
-
-    const displayNames = getAttendeeDisplayNames(session.attendees, workersById);
-    const firstParticipantName = displayNames[0];
-
-    try {
-      createCertificatePdf(
-        firstParticipantName,
-        session.title,
-        session.date,
-        session.durationHours
-      );
-      if (session.attendees.length > 1) {
-        notifications.show({
-          title: t('education.certificateDownloaded'),
-          message: `${firstParticipantName} için sertifika indirildi. Diğer katılımcılar için tekrar tıklayıp ayrı ayrı indirebilirsiniz.`,
-          color: 'green',
-        });
-      } else {
-        notifications.show({
-          title: t('education.certificateDownloaded'),
-          message: 'Sertifika başarıyla indirildi.',
-          color: 'green',
-        });
-      }
-    } catch {
-      notifications.show({
-        title: 'Hata',
-        message: 'Sertifika oluşturulurken bir hata oluştu.',
-        color: 'red',
-      });
-    }
+  const handleOpenCertificates = (session: EducationSession) => {
+    setCertificateSession(session);
+    openCertificateModal();
   };
 
   const handleSubmit = (values: EducationFormValues) => {
@@ -243,12 +201,13 @@ export function EducationPage() {
             </ActionIcon>
             <ActionIcon
               variant="subtle"
-              color="green"
-              onClick={() => handleDownloadCertificate(session)}
-              aria-label={t('education.generateCertificate')}
-              disabled={session.status !== 'Tamamlandı'}
+              color="teal"
+              onClick={() => handleOpenCertificates(session)}
+              aria-label="Sertifika Oluştur"
+              title="Sertifika Oluştur"
+              disabled={session.status !== 'Tamamlandı' || session.attendees.length === 0}
             >
-              <IconFileText size={18} />
+              <IconCertificate size={18} />
             </ActionIcon>
             <ActionIcon
               variant="subtle"
@@ -389,6 +348,21 @@ export function EducationPage() {
         onSubmit={handleSubmit}
         initialValues={editingSession}
         title={editingSession ? t('education.editSession') : t('education.addSession')}
+      />
+
+      {/* Bulk Certificate Modal */}
+      <CertificateModal
+        opened={certificateModalOpened}
+        onClose={() => {
+          closeCertificateModal();
+          setCertificateSession(null);
+        }}
+        session={certificateSession}
+        participantNames={
+          certificateSession
+            ? getAttendeeDisplayNames(certificateSession.attendees, workersById)
+            : []
+        }
       />
     </>
   );

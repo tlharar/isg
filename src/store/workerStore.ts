@@ -1,6 +1,24 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { WorkerFormValues } from '@domains/worker/schemas/workerSchema';
+import { useAuthStore, DEFAULT_WORKER_USER_PASSWORD } from '@shared/stores/authStore';
+import { useCompanyStore } from '@store/companyStore';
+import { sendWelcomeEmail } from '@/services/emailService';
+
+/** In this app the "user store" is authStore (useAuthStore). New users appear in Admin User Management and can log in. */
+
+/** Job titles that trigger automatic user account creation (default password, force change on first login). */
+export const AUTO_ACCOUNT_JOB_TITLES = ['İş Güvenliği Uzmanı', 'İşyeri Hekimi'] as const;
+
+/** Job title codes that also trigger auto user + welcome email. */
+const AUTO_ACCOUNT_JOB_CODES = ['ISG_UZMANI', 'ISYERI_HEKIMI'] as const;
+
+function shouldAutoCreateUser(jobTitle: string | undefined): boolean {
+  if (!jobTitle) return false;
+  if (AUTO_ACCOUNT_JOB_TITLES.some((t) => t === jobTitle)) return true;
+  if (AUTO_ACCOUNT_JOB_CODES.some((c) => c === jobTitle)) return true;
+  return false;
+}
 
 /** For 'Yetkilendirme' e.g. 'Usta Başı', 'Çalışan Temsilcisi' */
 export type WorkerRoleCode = 'Usta Basi' | 'Calisan Temsilcisi' | 'Acil Durum Eki';
@@ -37,6 +55,8 @@ interface WorkerState {
   updateWorker: (id: string, data: Partial<Omit<Worker, 'id'>>) => void;
   deleteWorker: (id: string) => void;
   getWorkerById: (id: string) => Worker | undefined;
+  /** Resend login credentials email for a worker (Admin/Manager). Returns true if sent. */
+  resendWorkerCredentials: (workerId: string) => boolean;
   loadData: (isDemo: boolean) => void;
 }
 
@@ -48,6 +68,35 @@ export const useWorkerStore = create<WorkerState>()(
       addWorker: (data: WorkerFormValues) => {
         const worker: Worker = { ...data, id: generateId() };
         set((state) => ({ workers: [...state.workers, worker] }));
+
+        const isAutoAccountJob =
+          worker.jobTitle === 'ISG_UZMANI' || worker.jobTitle === 'ISYERI_HEKIMI' || shouldAutoCreateUser(worker.jobTitle);
+        const hasEmailAndName = !!(worker.email?.trim() && worker.nameSurname?.trim());
+
+        if (isAutoAccountJob && hasEmailAndName) {
+          const authStore = useAuthStore.getState();
+          const currentUserId = authStore.currentUser?.id ?? null;
+          const newUser = authStore.addUserForWorker(
+            worker.id,
+            worker.email!.trim(),
+            worker.nameSurname!.trim(),
+            worker.jobTitle!,
+            currentUserId
+          );
+          if (newUser) {
+            const companyName = worker.companyId
+              ? useCompanyStore.getState().getCompanyById(worker.companyId)?.name ?? ''
+              : '';
+            sendWelcomeEmail({
+              name: worker.nameSurname.trim(),
+              email: worker.email.trim(),
+              password: DEFAULT_WORKER_USER_PASSWORD,
+              company_name: companyName,
+            }).catch((emailErr) => {
+              console.error('[workerStore] Welcome email failed (e.g. ad blocker):', emailErr);
+            });
+          }
+        }
         return worker;
       },
 
@@ -75,6 +124,24 @@ export const useWorkerStore = create<WorkerState>()(
       },
 
       getWorkerById: (id: string) => get().workers.find((w) => w.id === id),
+
+      resendWorkerCredentials: (workerId: string) => {
+        const worker = get().workers.find((w) => w.id === workerId);
+        if (!worker?.email?.trim() || !worker?.nameSurname?.trim()) return false;
+        const authStore = useAuthStore.getState();
+        const ok = authStore.resetCredentialsForWorkerUser(workerId);
+        if (!ok) return false;
+        const companyName = worker.companyId
+          ? useCompanyStore.getState().getCompanyById(worker.companyId)?.name ?? ''
+          : '';
+        sendWelcomeEmail({
+          name: worker.nameSurname.trim(),
+          email: worker.email.trim(),
+          password: DEFAULT_WORKER_USER_PASSWORD,
+          company_name: companyName,
+        }).catch(() => {});
+        return true;
+      },
 
       loadData: (isDemo) => {
         if (isDemo) {

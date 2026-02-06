@@ -6,20 +6,19 @@ import {
   ActionIcon,
   Burger,
   SegmentedControl,
-  Select,
   Menu,
   Button,
   Avatar,
   Box,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconSun, IconMoon, IconLogout, IconBuilding, IconUser, IconKey } from '@tabler/icons-react';
+import { IconSun, IconMoon, IconLogout, IconUser, IconKey } from '@tabler/icons-react';
 import { useAppStore } from '@shared/stores/appStore';
 import { useAuthStore } from '@shared/stores/authStore';
 import { useTranslation } from '@shared/i18n';
-import { useCompanyStore } from '@store/companyStore';
 import { AccountSettingsModal } from './AccountSettingsModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { CompanySelect } from './CompanySelect';
 
 function getInitials(firstName: string, lastName: string, email: string): string {
   const first = (firstName || '').trim().charAt(0);
@@ -47,29 +46,12 @@ interface ShellHeaderProps {
 
 export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeaderProps) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
-  const setSelectedCompanyId = useAppStore((s) => s.setSelectedCompanyId);
   const setLocale = useAppStore((s) => s.setLocale);
-  const getMainCompanies = useCompanyStore((s) => s.getMainCompanies);
-  const getSubContractorCompanies = useCompanyStore((s) => s.getSubContractorCompanies);
   const currentUser = useAuthStore((s) => s.currentUser);
   const logout = useAuthStore((s) => s.logout);
   const { t, locale } = useTranslation();
   const [passwordModalOpened, { open: openPasswordModal, close: closePasswordModal }] = useDisclosure(false);
   const [accountModalOpened, { open: openAccountModal, close: closeAccountModal }] = useDisclosure(false);
-
-  const companyOptions = (() => {
-    const mains = getMainCompanies();
-    const options: { value: string; label: string }[] = [{ value: '', label: t('common.allCompanies') }];
-    for (const main of mains) {
-      options.push({ value: main.id, label: main.name });
-      const subs = getSubContractorCompanies(main.id);
-      for (const sub of subs) {
-        options.push({ value: sub.id, label: `   ↳ ${sub.name}` });
-      }
-    }
-    return options;
-  })();
 
   const displayName = currentUser
     ? getDisplayName(
@@ -121,18 +103,7 @@ export function ShellHeader({ mobileMenuOpened, onMobileMenuToggle }: ShellHeade
             </Link>
           </Box>
           <Group gap="xs" wrap="nowrap">
-            <Select
-              size="xs"
-              leftSection={<IconBuilding size={14} />}
-              placeholder={t('common.company')}
-              data={companyOptions}
-              value={selectedCompanyId ?? ''}
-              onChange={(v) => setSelectedCompanyId(v === '' ? null : v)}
-              clearable={false}
-              style={{ minWidth: 140 }}
-              visibleFrom="sm"
-              aria-label={t('common.company')}
-            />
+            <CompanySelect size="xs" visibleFrom="sm" variant="header" />
             <SegmentedControl
               size="xs"
               value={locale}

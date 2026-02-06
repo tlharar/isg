@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Text, TextInput, PasswordInput, Button, Stack, Paper, Group } from '@mantine/core';
 import { useTranslation } from '@shared/i18n';
-import { useAuthStore } from '@shared/stores/authStore';
+import { useAuthStore, DEFAULT_WORKER_USER_PASSWORD } from '@shared/stores/authStore';
 import { initializeUserData } from '@shared/dataManager';
+import { ForcePasswordChangeModal } from '@auth/ForcePasswordChangeModal';
 
 /** Brand colors for ÖZARTEK dual-tone text (matches ShellHeader) */
 const BRAND_TURQUOISE = '#00C2CB';
@@ -16,6 +17,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showForcePasswordModal, setShowForcePasswordModal] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +25,14 @@ export function LoginPage() {
     try {
       const user = login(email.trim(), password);
       if (user) {
+        if (user.mustChangePassword === true) {
+          setShowForcePasswordModal(true);
+          return;
+        }
+        if (user.password === DEFAULT_WORKER_USER_PASSWORD) {
+          setShowForcePasswordModal(true);
+          return;
+        }
         initializeUserData(user.role);
         navigate('/dashboard');
       } else {
@@ -31,6 +41,13 @@ export function LoginPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.invalidCredentials'));
     }
+  };
+
+  const handleForcePasswordSuccess = () => {
+    const user = useAuthStore.getState().currentUser;
+    if (user) initializeUserData(user.role);
+    setShowForcePasswordModal(false);
+    navigate('/dashboard');
   };
 
   const handleSignUp = () => {
@@ -106,6 +123,11 @@ export function LoginPage() {
           </Stack>
         </form>
       </Paper>
+      <ForcePasswordChangeModal
+        opened={showForcePasswordModal}
+        onClose={() => setShowForcePasswordModal(false)}
+        onSuccess={handleForcePasswordSuccess}
+      />
     </Box>
   );
 }

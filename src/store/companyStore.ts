@@ -132,6 +132,26 @@ const MOCK_COMPANIES: Company[] = [
     subContractors: [],
     parentId: null,
   },
+  {
+    id: 'c2-sub1',
+    name: 'Company B - Alt İşveren 1',
+    naceCode: '35110',
+    dangerClass: 'Çok Tehlikeli',
+    sector: 'Enerji',
+    sgkSicilNo: 'SGK-002-S1',
+    taxOffice: 'Çankaya',
+    taxNumber: '0987654322',
+    city: 'Ankara',
+    district: 'Çankaya',
+    address: 'Sub Address 1',
+    phone: '',
+    email: '',
+    status: 'active',
+    employeeCountSystem: 20,
+    employeeCountIsgKatip: 20,
+    subContractors: [],
+    parentId: 'c2',
+  },
 ];
 
 export type SubContractorInput = Omit<SubContractor, 'id'>;
@@ -166,7 +186,7 @@ export const useCompanyStore = create<CompanyState>()(
           subContractors: [],
           parentId: data.parentId ?? null,
         };
-        set((state) => ({ companies: [...state.companies, company] }));
+        set((state) => ({ companies: [...(state.companies ?? []), company] }));
         return company;
       },
 
@@ -178,28 +198,38 @@ export const useCompanyStore = create<CompanyState>()(
           employeeCountIsgKatip: 0,
           subContractors: [],
         }));
-        set((state) => ({ companies: [...state.companies, ...newCompanies] }));
+        set((state) => ({ companies: [...(state.companies ?? []), ...newCompanies] }));
       },
 
       updateCompany: (id: string, data: CompanyFormValues) => {
         set((state) => ({
-          companies: state.companies.map((c) =>
+          companies: (state.companies ?? []).map((c) =>
             c.id === id ? { ...c, ...data, parentId: data.parentId ?? c.parentId } : c
           ),
         }));
       },
 
       deleteCompany: (id: string) => {
-        set((state) => ({ companies: state.companies.filter((c) => c.id !== id) }));
+        set((state) => ({ companies: (state.companies ?? []).filter((c) => c.id !== id) }));
       },
 
-      getCompanyById: (id: string) => get().companies.find((c) => c.id === id),
+      getCompanyById: (id: string) => {
+        const companies = get().companies;
+        if (!companies || !Array.isArray(companies)) return undefined;
+        return companies.find((c) => c && c.id === id);
+      },
 
-      getMainCompanies: () =>
-        get().companies.filter((c) => c.parentId == null || c.parentId === ''),
+      getMainCompanies: () => {
+        const companies = get().companies;
+        if (!companies || !Array.isArray(companies)) return [];
+        return companies.filter((c) => c && (c.parentId == null || c.parentId === ''));
+      },
 
-      getSubContractorCompanies: (parentId: string) =>
-        get().companies.filter((c) => c.parentId === parentId),
+      getSubContractorCompanies: (parentId: string) => {
+        const companies = get().companies;
+        if (!companies || !Array.isArray(companies) || !parentId) return [];
+        return companies.filter((c) => c && c.parentId === parentId);
+      },
 
       addSubContractor: (companyId, subContractor) => {
         const sub: SubContractor = {
@@ -207,7 +237,7 @@ export const useCompanyStore = create<CompanyState>()(
           id: generateSubContractorId(),
         };
         set((state) => ({
-          companies: state.companies.map((c) =>
+          companies: (state.companies ?? []).map((c) =>
             c.id === companyId
               ? { ...c, subContractors: [...(c.subContractors ?? []), sub] }
               : c
@@ -217,7 +247,7 @@ export const useCompanyStore = create<CompanyState>()(
 
       removeSubContractor: (companyId, subContractorId) => {
         set((state) => ({
-          companies: state.companies.map((c) =>
+          companies: (state.companies ?? []).map((c) =>
             c.id === companyId
               ? {
                   ...c,
@@ -233,6 +263,16 @@ export const useCompanyStore = create<CompanyState>()(
         else set({ companies: [] });
       },
     }),
-    { name: 'ohs-companies', partialize: (state) => ({ companies: state.companies }) }
+    {
+      name: 'ohs-companies',
+      partialize: (state) => ({ companies: state.companies ?? [] }),
+      merge: (persisted, current) => {
+        const p = persisted as { companies?: Company[] } | undefined;
+        return {
+          ...current,
+          companies: Array.isArray(p?.companies) ? p.companies : (current.companies ?? []),
+        };
+      },
+    }
   )
 );

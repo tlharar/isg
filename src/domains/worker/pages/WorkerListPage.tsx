@@ -18,16 +18,17 @@ import {
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconDownload, IconDots, IconEdit, IconTrash, IconKey, IconBuilding, IconCertificate, IconLink } from '@tabler/icons-react';
+import { IconPlus, IconDownload, IconDots, IconEdit, IconTrash, IconKey, IconBuilding, IconCertificate, IconLink, IconMailForward } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from '@shared/i18n';
 import { useExportExcel } from '@shared/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { workerFormSchema, type WorkerFormValues } from '../schemas/workerSchema';
-import { useWorkerStore, type Worker } from '@store/workerStore';
+import { useWorkerStore, type Worker, AUTO_ACCOUNT_JOB_TITLES } from '@store/workerStore';
 import { useAppStore } from '@shared/stores/appStore';
 import { useCompanyStore } from '@store/companyStore';
+import { useAuthStore, canManagerAddWorker, incrementManagerWorkerCount, decrementManagerWorkerCount } from '@shared/stores/authStore';
 import { WorkerAuthModal } from '../components/WorkerAuthModal';
 import { WorkerCompaniesModal } from '../components/WorkerCompaniesModal';
 import { WorkerVisaModal } from '../components/WorkerVisaModal';
@@ -81,6 +82,7 @@ function WorkerModalForm({ worker, selectedCompanyId, onSubmit, onCancel, t }: W
     register,
     handleSubmit,
     setValue,
+    setError,
     watch,
     formState: { errors },
   } = useForm<WorkerFormValues>({
@@ -125,8 +127,16 @@ function WorkerModalForm({ worker, selectedCompanyId, onSubmit, onCancel, t }: W
   const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
   const subContractorOptions = subContractors.map((s) => ({ value: s.id, label: s.name }));
 
+  const handleFormSubmit = (data: WorkerFormValues) => {
+    if (!data.jobTitle?.trim()) {
+      setError('jobTitle', { message: 'Görevi seçmek zorunludur' });
+      return;
+    }
+    onSubmit(data);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <Stack gap="md">
         <TextInput
           label={t('worker.form.nameSurname')}
@@ -259,6 +269,11 @@ export function WorkerListPage() {
   const addWorker = useWorkerStore((state) => state.addWorker);
   const updateWorker = useWorkerStore((state) => state.updateWorker);
   const deleteWorker = useWorkerStore((state) => state.deleteWorker);
+  const resendWorkerCredentials = useWorkerStore((state) => state.resendWorkerCredentials);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const canAddWorker = canManagerAddWorker(currentUser);
+  const incrementManagerCount = useAuthStore((s) => s.incrementManagerWorkerCount);
+  const decrementManagerCount = useAuthStore((s) => s.decrementManagerWorkerCount);
 
   function getCompanySubContractorLabel(w: Worker): string {
     const company = w.companyId ? getCompanyById(w.companyId) : null;
@@ -292,7 +307,10 @@ export function WorkerListPage() {
       children: <Text size="sm">{t('worker.deleteConfirm')}</Text>,
       labels: { confirm: t('common.delete'), cancel: t('common.cancel') },
       confirmProps: { color: 'red' },
-      onConfirm: () => deleteWorker(worker.id),
+      onConfirm: () => {
+        deleteWorker(worker.id);
+        decrementManagerCount();
+      },
     });
   };
 
@@ -322,7 +340,25 @@ export function WorkerListPage() {
     if (editingWorker) {
       updateWorker(editingWorker.id, payload);
     } else {
+      if (!canAddWorker) {
+        notifications.show({
+          title: 'Limit aşıldı',
+          message: 'Kullanıcı limitiniz doldu. Yeni çalışan ekleyemezsiniz.',
+          color: 'red',
+        });
+        return;
+      }
       addWorker(payload);
+      incrementManagerCount();
+      const isAutoAccount =
+        payload.jobTitle && AUTO_ACCOUNT_JOB_TITLES.includes(payload.jobTitle as (typeof AUTO_ACCOUNT_JOB_TITLES)[number]);
+      if (isAutoAccount) {
+        notifications.show({
+          title: 'Başarılı',
+          message: 'Kullanıcı oluşturuldu ve bilgilendirme maili gönderildi.',
+          color: 'green',
+        });
+      }
     }
     closeModal();
     setEditingWorker(null);
@@ -345,7 +381,7 @@ export function WorkerListPage() {
             <Button variant="light" leftSection={<IconDownload size={16} />} onClick={handleDownloadTemplate} size="sm">
               {t('worker.downloadTemplate')}
             </Button>
-            <Button leftSection={<IconPlus size={16} />} size="sm" onClick={handleAddClick}>
+            <Button leftSection={<IconPlus size={16} />} size="sm" onClick={handleAddClick} disabled={!canAddWorker} title={!canAddWorker ? 'Kullanıcı limitiniz doldu. Yeni çalışan ekleyemezsiniz.' : undefined}>
               {t('worker.addWorker')}
             </Button>
           </Group>
@@ -435,6 +471,20 @@ export function WorkerListPage() {
                         onClick={() => handlePasswordLinkClick(w)}
                       >
                         {t('worker.actions.passwordCreationLink')}
+                      </Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconMailForward size={14} />}
+                        onClick={() => {
+                          const ok = resendWorkerCredentials(w.id);
+                          if (ok) {
+                            notifications.show({ title: 'Başarılı', message: 'Şifre sıfırlandı ve mail tekrar gönderildi.', color: 'green' });
+                          } else {
+                            notifications.show({ title: 'Hata', message: 'Giriş bilgileri gönderilemedi. Kullanıcı hesabı bulunamadı veya yetkiniz yok.', color: 'red' });
+                          }
+                        }}
+                        title="Giriş Bilgilerini Tekrar Gönder"
+                      >
+                        Giriş Bilgilerini Tekrar Gönder
                       </Menu.Item>
                     </Menu.Dropdown>
                   </Menu>

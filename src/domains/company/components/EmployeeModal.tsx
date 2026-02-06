@@ -12,8 +12,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { workerFormSchema, type WorkerFormValues } from '@domains/worker/schemas/workerSchema';
 import { useCompanyStore } from '@store/companyStore';
 import type { Worker } from '@store/workerStore';
+import { AUTO_ACCOUNT_JOB_TITLES } from '@store/workerStore';
 
-/** Standard job titles for Görevi / Ünvanı. When "Diğer" is selected, a text input is shown. */
+/** Job titles that trigger auto user account creation; dropdown is restricted to these when adding a new worker. */
+const JOB_TITLE_OPTIONS_AUTO_ACCOUNT = [...AUTO_ACCOUNT_JOB_TITLES] as const;
+
+/** Standard job titles for Görevi / Ünvanı when editing. When "Diğer" is selected, a text input is shown. */
 export const JOB_TITLE_OPTIONS = [
   'İş Güvenliği Uzmanı',
   'İşyeri Hekimi',
@@ -23,6 +27,7 @@ export const JOB_TITLE_OPTIONS = [
 ] as const;
 
 const JOB_TITLE_SELECT_DATA = JOB_TITLE_OPTIONS.map((v) => ({ value: v, label: v }));
+const JOB_TITLE_AUTO_ACCOUNT_SELECT_DATA = JOB_TITLE_OPTIONS_AUTO_ACCOUNT.map((v) => ({ value: v, label: v }));
 
 function getInitialJobTitleSelect(worker: Worker | null): string {
   if (!worker?.jobTitle?.trim()) return '';
@@ -53,6 +58,7 @@ export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t
     register,
     handleSubmit,
     setValue,
+    setError,
     watch,
     getValues,
     formState: { errors },
@@ -94,7 +100,9 @@ export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t
   const jobTitleSelect = watch('jobTitleSelect');
   const companyId = watch('companyId');
   const showCompanySelect = !selectedCompanyId;
-  const showJobTitleOther = jobTitleSelect === 'Diğer';
+  const isNewWorker = worker == null;
+  const jobTitleSelectData = isNewWorker ? JOB_TITLE_AUTO_ACCOUNT_SELECT_DATA : JOB_TITLE_SELECT_DATA;
+  const showJobTitleOther = !isNewWorker && jobTitleSelect === 'Diğer';
 
   const effectiveCompanyId = companyId ?? selectedCompanyId ?? null;
   const selectedCompany = effectiveCompanyId ? getCompanyById(effectiveCompanyId) : null;
@@ -109,6 +117,10 @@ export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t
     const jobTitleOther = getValues('jobTitleOther');
     const jobTitle =
       jobTitleSelect === 'Diğer' ? (jobTitleOther ?? '').trim() : (jobTitleSelect ?? '').trim();
+    if (!jobTitle) {
+      setError('jobTitleSelect', { message: 'Görevi seçmek zorunludur' });
+      return;
+    }
     onSubmit({ ...data, jobTitle: jobTitle || undefined });
   };
 
@@ -152,13 +164,15 @@ export function EmployeeModal({ worker, selectedCompanyId, onSubmit, onCancel, t
         <Select
           label={t('worker.form.jobTitle')}
           placeholder={t('worker.form.jobTitle')}
-          data={JOB_TITLE_SELECT_DATA}
+          data={jobTitleSelectData}
           value={jobTitleSelect || null}
           onChange={(v) => {
             setValue('jobTitleSelect', v ?? '');
             if (v !== 'Diğer') setValue('jobTitleOther', '');
           }}
-          clearable
+          clearable={!isNewWorker}
+          required={isNewWorker}
+          error={errors.jobTitleSelect?.message}
         />
         {showJobTitleOther && (
           <TextInput

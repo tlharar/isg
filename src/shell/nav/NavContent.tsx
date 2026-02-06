@@ -8,7 +8,7 @@ import {
   Collapse,
   SegmentedControl,
   ScrollArea,
-  Select,
+  Group,
 } from '@mantine/core';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useMediaQuery, useDisclosure } from '@mantine/hooks';
@@ -21,7 +21,6 @@ import {
   IconChevronDown,
   IconChevronRight,
   IconSitemap,
-  IconTruck,
   IconUserCircle,
   IconMail,
   IconShield,
@@ -34,7 +33,7 @@ import {
 import { useTranslation } from '@shared/i18n';
 import { useAppStore } from '@shared/stores/appStore';
 import { useAuthStore, type UserRole } from '@shared/stores/authStore';
-import { useCompanyStore } from '@store/companyStore';
+import { CompanySelect } from '../header/CompanySelect';
 
 const ALL_ROLES: UserRole[] = ['Admin', 'Hekim', 'IsgUzman', 'GenelKullanici', 'DemoHekim', 'DemoUzman', 'DemoGenel'];
 const SAFETY_ROLES: UserRole[] = ['Admin', 'IsgUzman', 'GenelKullanici', 'DemoUzman', 'DemoGenel'];
@@ -56,7 +55,6 @@ const companySubItems = [
   { to: '/company', end: true, labelKey: 'company.menu.companies', icon: IconBuilding },
   { to: '/company/employees', end: false, labelKey: 'company.menu.employees', icon: IconUsers },
   { to: '/company/units', end: false, labelKey: 'company.menu.units', icon: IconSitemap },
-  { to: '/company/subcontractors', end: false, labelKey: 'company.menu.subcontractors', icon: IconTruck },
   { to: '/company/representative', end: false, labelKey: 'company.menu.representative', icon: IconUserCircle },
   { to: '/company/mail-groups', end: false, labelKey: 'company.menu.mailGroups', icon: IconMail },
 ] as const;
@@ -235,9 +233,6 @@ export function NavContent({ onNavigate }: NavContentProps) {
   const navigate = useNavigate();
   const { t, locale } = useTranslation();
   const setLocale = useAppStore((s) => s.setLocale);
-  const selectedCompanyId = useAppStore((s) => s.selectedCompanyId);
-  const setSelectedCompanyId = useAppStore((s) => s.setSelectedCompanyId);
-  const companies = useCompanyStore((s) => s.companies);
   const userRole = useAuthStore((s) => s.currentUser?.role);
   const isMobile = useMediaQuery('(max-width: 47.99em)');
 
@@ -306,11 +301,6 @@ export function NavContent({ onNavigate }: NavContentProps) {
     color: isActive ? '#ffffff' : 'var(--sidebar-text)',
   });
 
-  const companyOptions = [
-    { value: '', label: t('common.allCompanies') },
-    ...companies.map((c) => ({ value: c.id, label: c.name })),
-  ];
-
   return (
     <Box
       style={{
@@ -331,19 +321,9 @@ export function NavContent({ onNavigate }: NavContentProps) {
           }}
         >
           <Text fw={500} size="xs" mb="xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {t('common.company')}
+            Ana Firma
           </Text>
-          <Select
-            size="sm"
-            leftSection={<IconBuilding size={16} />}
-            placeholder={t('common.company')}
-            data={companyOptions}
-            value={selectedCompanyId ?? ''}
-            onChange={(v) => setSelectedCompanyId(v === '' ? null : v)}
-            clearable={false}
-            aria-label={t('common.company')}
-            style={{ width: '100%' }}
-          />
+          <CompanySelect size="sm" variant="sidebar" />
         </Box>
       )}
 
