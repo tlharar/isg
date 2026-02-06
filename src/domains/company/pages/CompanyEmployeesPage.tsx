@@ -25,7 +25,7 @@ import type { WorkerFormValues } from '@domains/worker/schemas/workerSchema';
 import { useWorkerStore, type Worker, AUTO_ACCOUNT_JOB_TITLES } from '@store/workerStore';
 import { useCompanyStore } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
-import { useAuthStore, canManagerAddWorker, incrementManagerWorkerCount, decrementManagerWorkerCount } from '@shared/stores/authStore';
+import { useAuthStore, canManagerAddWorker } from '@shared/stores/authStore';
 import { EmployeeModal } from '@domains/company/components/EmployeeModal';
 import { WorkerAuthModal } from '@domains/worker/components/WorkerAuthModal';
 import { WorkerCompaniesModal } from '@domains/worker/components/WorkerCompaniesModal';
@@ -153,8 +153,6 @@ export function CompanyEmployeesPage() {
   const resendWorkerCredentials = useWorkerStore((state) => state.resendWorkerCredentials);
   const currentUser = useAuthStore((s) => s.currentUser);
   const canAddWorker = canManagerAddWorker(currentUser);
-  const incrementManagerCount = useAuthStore((s) => s.incrementManagerWorkerCount);
-  const decrementManagerCount = useAuthStore((s) => s.decrementManagerWorkerCount);
 
   function getCompanySubContractorLabel(w: Worker): string {
     const company = w.companyId ? getCompanyById(w.companyId) : null;
@@ -193,7 +191,6 @@ export function CompanyEmployeesPage() {
       confirmProps: { color: 'red' },
       onConfirm: () => {
         deleteWorker(worker.id);
-        decrementManagerCount();
       },
     });
   };
@@ -233,7 +230,6 @@ export function CompanyEmployeesPage() {
         return;
       }
       addWorker(payload);
-      incrementManagerCount();
       const isAutoAccount =
         payload.jobTitle && AUTO_ACCOUNT_JOB_TITLES.includes(payload.jobTitle as (typeof AUTO_ACCOUNT_JOB_TITLES)[number]);
       if (isAutoAccount) {
@@ -284,7 +280,6 @@ export function CompanyEmployeesPage() {
           }
           const payload = mappedRowToWorkerFormValues(mapped, selectedCompanyId);
           addWorker(payload);
-          incrementManagerCount();
           addedCount++;
         });
 

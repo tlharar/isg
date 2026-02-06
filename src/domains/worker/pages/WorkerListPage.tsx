@@ -28,7 +28,7 @@ import { workerFormSchema, type WorkerFormValues } from '../schemas/workerSchema
 import { useWorkerStore, type Worker, AUTO_ACCOUNT_JOB_TITLES } from '@store/workerStore';
 import { useAppStore } from '@shared/stores/appStore';
 import { useCompanyStore } from '@store/companyStore';
-import { useAuthStore, canManagerAddWorker, incrementManagerWorkerCount, decrementManagerWorkerCount } from '@shared/stores/authStore';
+import { useAuthStore, canManagerAddWorker } from '@shared/stores/authStore';
 import { WorkerAuthModal } from '../components/WorkerAuthModal';
 import { WorkerCompaniesModal } from '../components/WorkerCompaniesModal';
 import { WorkerVisaModal } from '../components/WorkerVisaModal';
@@ -272,8 +272,6 @@ export function WorkerListPage() {
   const resendWorkerCredentials = useWorkerStore((state) => state.resendWorkerCredentials);
   const currentUser = useAuthStore((s) => s.currentUser);
   const canAddWorker = canManagerAddWorker(currentUser);
-  const incrementManagerCount = useAuthStore((s) => s.incrementManagerWorkerCount);
-  const decrementManagerCount = useAuthStore((s) => s.decrementManagerWorkerCount);
 
   function getCompanySubContractorLabel(w: Worker): string {
     const company = w.companyId ? getCompanyById(w.companyId) : null;
@@ -309,7 +307,6 @@ export function WorkerListPage() {
       confirmProps: { color: 'red' },
       onConfirm: () => {
         deleteWorker(worker.id);
-        decrementManagerCount();
       },
     });
   };
@@ -349,7 +346,6 @@ export function WorkerListPage() {
         return;
       }
       addWorker(payload);
-      incrementManagerCount();
       const isAutoAccount =
         payload.jobTitle && AUTO_ACCOUNT_JOB_TITLES.includes(payload.jobTitle as (typeof AUTO_ACCOUNT_JOB_TITLES)[number]);
       if (isAutoAccount) {

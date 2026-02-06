@@ -8,7 +8,6 @@ import {
   Group,
   ActionIcon,
   Paper,
-  Stack,
   Box,
 } from '@mantine/core';
 import { IconPlus, IconDownload, IconTrash } from '@tabler/icons-react';

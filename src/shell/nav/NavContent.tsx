@@ -8,7 +8,6 @@ import {
   Collapse,
   SegmentedControl,
   ScrollArea,
-  Group,
 } from '@mantine/core';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useMediaQuery, useDisclosure } from '@mantine/hooks';

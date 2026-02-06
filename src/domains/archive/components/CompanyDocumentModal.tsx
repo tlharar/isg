@@ -179,8 +179,8 @@ export function CompanyDocumentModal({ opened, onClose, onSaved }: CompanyDocume
             required={requireValidUntil}
           />
           <div>
-            <Text size="sm" fw={500} required mb={4}>
-              Dosya
+            <Text size="sm" fw={500} mb={4}>
+              Dosya <span style={{ color: 'red' }}>*</span>
             </Text>
             <FileButton
               resetRef={fileResetRef}

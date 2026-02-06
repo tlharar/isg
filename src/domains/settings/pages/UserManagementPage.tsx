@@ -19,7 +19,7 @@ import {
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconTrash, IconLockOff, IconEdit, IconChevronRight, IconChevronDown, IconKey } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconLockOff, IconEdit, IconChevronRight, IconChevronDown } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useAuthStore, type User, type UserRole, isUserExpired, getHierarchy } from '@shared/stores/authStore';
 
@@ -60,11 +60,13 @@ function UserRow({
   user,
   onEdit,
   onDelete,
+  onPasswordChange,
   showActions,
 }: {
   user: User;
   onEdit: (u: User) => void;
   onDelete: (u: User) => void;
+  onPasswordChange: (u: User) => void;
   showActions: boolean;
 }) {
   return (
@@ -90,6 +92,9 @@ function UserRow({
             <ActionIcon variant="subtle" onClick={() => onEdit(user)} title="Düzenle">
               <IconEdit size={16} />
             </ActionIcon>
+            <ActionIcon variant="subtle" onClick={() => onPasswordChange(user)} title="Şifre Değiştir">
+              <IconLockOff size={16} />
+            </ActionIcon>
             {user.role !== 'Admin' && (
               <ActionIcon color="red" variant="subtle" onClick={() => onDelete(user)} title="Sil">
                 <IconTrash size={16} />
@@ -106,10 +111,12 @@ function ChildTable({
   users,
   onEdit,
   onDelete,
+  onPasswordChange,
 }: {
   users: User[];
   onEdit: (u: User) => void;
   onDelete: (u: User) => void;
+  onPasswordChange: (u: User) => void;
 }) {
   if (users.length === 0) return null;
   return (
@@ -127,7 +134,7 @@ function ChildTable({
       <Table.Tbody>
         {users.map((u) => (
           <Table.Tr key={u.id}>
-            <UserRow user={u} onEdit={onEdit} onDelete={onDelete} showActions />
+            <UserRow user={u} onEdit={onEdit} onDelete={onDelete} onPasswordChange={onPasswordChange} showActions />
           </Table.Tr>
         ))}
       </Table.Tbody>

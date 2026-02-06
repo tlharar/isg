@@ -158,8 +158,8 @@ export function DocumentUploadModal({ opened, onClose, onSaved }: DocumentUpload
             {...form.getInputProps('validUntilDate')}
           />
           <div>
-            <Text size="sm" fw={500} required mb={4}>
-              Dosya
+            <Text size="sm" fw={500} mb={4}>
+              Dosya <span style={{ color: 'red' }}>*</span>
             </Text>
             <FileButton
               resetRef={fileResetRef}

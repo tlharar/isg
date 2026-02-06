@@ -22,7 +22,7 @@ import { useTranslation } from '@shared/i18n';
 import { useWorkerStore, AUTO_ACCOUNT_JOB_TITLES } from '@store/workerStore';
 import { useCompanyStore } from '@store/companyStore';
 import { useAppStore } from '@shared/stores/appStore';
-import { useAuthStore, canManagerAddWorker, incrementManagerWorkerCount } from '@shared/stores/authStore';
+import { useAuthStore, canManagerAddWorker } from '@shared/stores/authStore';
 import {
   useHealthStore,
   computeValidUntil,
@@ -92,7 +92,6 @@ export function HealthModal({
   const addWorker = useWorkerStore((s) => s.addWorker);
   const currentUser = useAuthStore((s) => s.currentUser);
   const canAddWorker = canManagerAddWorker(currentUser);
-  const incrementManagerCount = useAuthStore((s) => s.incrementManagerWorkerCount);
   const companies = useCompanyStore((s) => s.companies);
   const getCompanyById = useCompanyStore((s) => s.getCompanyById);
   const getExaminationById = useHealthStore((s) => s.getExaminationById);
@@ -238,7 +237,6 @@ export function HealthModal({
       return;
     }
     const worker = addWorker(data);
-    incrementManagerCount();
     const isAutoAccount =
       data.jobTitle && AUTO_ACCOUNT_JOB_TITLES.includes(data.jobTitle as (typeof AUTO_ACCOUNT_JOB_TITLES)[number]);
     if (isAutoAccount) {
