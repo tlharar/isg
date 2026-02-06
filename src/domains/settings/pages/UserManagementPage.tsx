@@ -277,6 +277,10 @@ export function UserManagementPage() {
     }
   };
 
+  const handlePasswordChangeClick = (user: User) => {
+    openEdit(user);
+  };
+
   if (!isAdmin) {
     return (
       <Stack gap="md">
@@ -361,7 +365,7 @@ export function UserManagementPage() {
                               </Box>
                             )}
                           </Table.Td>
-                          <UserRow user={user} onEdit={openEdit} onDelete={handleDelete} showActions />
+                          <UserRow user={user} onEdit={openEdit} onDelete={handleDelete} onPasswordChange={handlePasswordChangeClick} showActions />
                         </Table.Tr>
                         {isExpanded && hasChildren && (
                           <Table.Tr>
@@ -370,7 +374,7 @@ export function UserManagementPage() {
                                 <MantineText size="xs" fw={600} c="dimmed" mb="xs">
                                   Alt kullanıcılar ({childUsers.length})
                                 </MantineText>
-                                <ChildTable users={childUsers} onEdit={openEdit} onDelete={handleDelete} />
+                                <ChildTable users={childUsers} onEdit={openEdit} onDelete={handleDelete} onPasswordChange={handlePasswordChangeClick} />
                               </Box>
                             </Table.Td>
                           </Table.Tr>
